@@ -1,6 +1,6 @@
 # Rugby Match Manager v26.3.9 PRO
 
-PWA per preparazione partita, importazione liste FIR, gestione live, tabellino, storico, backup ed esportazione statistiche.
+PWA per preparazione partita, importazione liste gara, gestione live, tabellino, storico, backup ed esportazione statistiche.
 
 ## Avvio
 Pubblicare tutti i file nella radice del repository GitHub Pages. Dopo un aggiornamento attendere il completamento del deploy, chiudere e riaprire la PWA.
