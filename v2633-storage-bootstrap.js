@@ -1,7 +1,7 @@
 'use strict';
 /* v26.3.9 - caricare prima di app.js. Separa TEST/UFFICIALE e gestisce schema 2. */
 (function(){
- const LEGACY='rugby-fir-v26';
+ const LEGACY='rugby-v26';
  const explicit=String(window.RUGBY_CHANNEL||'').toLowerCase();
  const isTest= false;
  const CHANNEL='rugby-manager-official-data';
