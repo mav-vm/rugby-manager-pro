@@ -1,4 +1,4 @@
-const KEY='rugby-v26';
+const KEY='rugby-fir-v26';
 const INIT={setup:{date:'',category:'Under 18',home:'BRIXIA.',away:'Ospiti',venue:'CASA',minutesPerHalf:40,location:'',referee:'',coachHome:'',coachAway:''},homeRoster:[],awayRoster:[],matches:[],draft:null,fir:null};
 let S;try{S=Object.assign(structuredClone(INIT),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{S=structuredClone(INIT)}
 let page='setup',timer;const app=document.querySelector('#app');
