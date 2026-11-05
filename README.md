@@ -1,4 +1,4 @@
-# Rugby Match Manager FIR v26.3.7
+# Rugby Match Manager v26.3.9 PRO
 
 PWA per preparazione partita, importazione liste FIR, gestione live, tabellino, storico, backup ed esportazione statistiche.
 
