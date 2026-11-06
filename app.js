@@ -27,6 +27,8 @@ function official(m){return m.setup.venue==='TRASFERTA'?{home:m.setup.away,away:
 funzione sostituita per versione pro
 function history(){app.innerHTML=`<div class="head"><h1>Storico</h1><div class="actions"><button id="exportAll" class="btn">Esporta statistiche</button><button id="deleteAll" class="danger">Cancella tutto</button></div></div>${S.matches.map(m=>{let o=official(m);return`<button class="card hist" data-match="${m.id}"><span><b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b><small>${esc(m.setup.date)} · ${esc(m.setup.category)}</small></span><span class="count">${m.events.length}<small>eventi</small></span></button>`}).join('')||'<section class="card">Nessuna partita salvata.</section>'}`;document.querySelectorAll('[data-match]').forEach(b=>b.onclick=()=>matchDetail(b.dataset.match));document.querySelector('#exportAll').onclick=exportAllStats;document.querySelector('#deleteAll').onclick=()=>{if(confirm('Cancellare tutto lo storico?')&&confirm('Conferma definitiva?')){S.matches=[];save();history()}}}
 */
+/*
+****   1
 function history(){
 
  const lic =
@@ -113,6 +115,114 @@ function history(){
        history();
      }
    };
+}
+*/
+function history(){
+
+  const lic =
+    window.RMMLicense?.get?.() ||
+    { type:'FREE' };
+
+  const licLabel =
+    lic.type === 'SOCIETA'
+      ? '🏢 SOCIETA'
+      : lic.type === 'PRO'
+        ? '🔑 PRO'
+        : '🔓 FREE';
+
+  app.innerHTML = `
+    <div class="head">
+      <h1>Storico</h1>
+
+      <div class="actions">
+
+        <button id="exportAll" class="btn">
+          Esporta statistiche
+        </button>
+
+        <button id="licenseBtn" class="outline">
+          ${licLabel}
+        </button>
+
+        <button id="deleteAll" class="danger">
+          Cancella tutto
+        </button>
+
+      </div>
+    </div>
+
+    ${
+      S.matches.map(m => {
+
+        const o = official(m);
+
+        return `
+          <button class="card hist" data-match="${m.id}">
+            <span>
+              <b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b>
+              <small>
+                ${esc(m.setup.date)} · ${esc(m.setup.category)}
+              </small>
+            </span>
+
+            <span class="count">
+              ${m.events.length}
+              <small>eventi</small>
+            </span>
+          </button>
+        `;
+
+      }).join('') ||
+
+      '<section class="card">Nessuna partita salvata.</section>'
+    }
+  `;
+
+  document
+    .querySelectorAll('[data-match]')
+    .forEach(
+      b => b.onclick = () =>
+        matchDetail(b.dataset.match)
+    );
+
+  document.querySelector('#exportAll').onclick = () => {
+
+    const lic =
+      window.RMMLicense?.get?.() ||
+      { type:'FREE' };
+
+    if (lic.type === 'FREE') {
+
+      alert(
+        'La funzione "Esporta statistiche" è disponibile solo nelle versioni PRO e SOCIETA.'
+      );
+
+      RMMLicense.show();
+
+      return;
+    }
+
+    exportAllStats();
+  };
+
+  document.querySelector('#licenseBtn').onclick =
+    () => RMMLicense.show();
+
+  document.querySelector('#deleteAll').onclick =
+    () => {
+
+      if (
+        confirm('Cancellare tutto lo storico?') &&
+        confirm('Conferma definitiva?')
+      ) {
+
+        S.matches = [];
+
+        save();
+
+        history();
+      }
+    };
 }
 function matchDetail(id){let m=S.matches.find(x=>x.id===id),o=official(m);document.body.insertAdjacentHTML('beforeend',`<div class="modal"><div class="modalbox"><button id="closeDetail" class="close">✕</button><h2>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</h2><div class="tabs"><button data-tab="events">Eventi</button><button data-tab="lineups">Formazioni</button><button data-tab="report">Tabellino</button></div><div id="detailBody"></div><div class="actions"><button id="txt" class="btn">Esporta TXT</button><button id="xlsx" class="outline">Excel partita</button></div></div></div>`);let modal=document.querySelector('.modal');document.querySelector('#closeDetail').onclick=()=>modal.remove();let body=document.querySelector('#detailBody');function tab(t){if(t==='events')body.innerHTML=m.events.map(eventHtml).join('');if(t==='lineups')body.innerHTML=lineupHtml(m);if(t==='report')body.innerHTML=`<pre class="report">${esc(generateReport(m))}</pre>`}document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));document.querySelector('#txt').onclick=()=>downloadText(reportFileName(m),generateReport(m));document.querySelector('#xlsx').onclick=()=>exportMatchExcel(m);tab('events')}
 function lineupHtml(m){let part=(title,r)=>`<h3>${esc(title)}</h3>${r.map(p=>`<div class="roster-row"><b>#${p.number??'-'} ${esc(displayName(p,r))}</b><small>${p.status}${p.flags?.length?' · '+p.flags.join('/') :''}</small></div>`).join('')}`;return part(m.setup.home,m.homePlayers)+part(m.setup.away,m.awayPlayers)}function fmtDate(v){if(!v)return'';let [y,m,d]=v.split('-');return`${d}/${m}/${y}`}function reportName(p,r){return displayName(p,r)}function formationText(m,side){let r=side==='home'?m.homePlayers:m.awayPlayers,initial=r.filter(p=>p.intervals?.some(i=>i.in===0)).sort((a,b)=>(a.firOrder??999)-(b.firOrder??999));return initial.map(p=>{let changes=m.events.filter(x=>['Cambio','Cambio temporaneo'].includes(x.type)&&x.side===side&&x.outId===p.id).slice().reverse();return reportName(p,r)+(changes.length?' ('+changes.map(x=>`${x.time.label} ${reportName(r.find(q=>q.id===x.inId),r)}`).join(', ')+')':'')}).join('; ')}

@@ -22,7 +22,98 @@ function temporaryMenu(){let open=S.draft.temporary.filter(x=>!x.end);if(!open.l
 function noContestFlow(){let d=S.draft,time=stamp();if(!d.noContest||d.noContest.end){d.noContest={start:time,end:null};d.events.unshift({id:uid(),type:'Inizio no contest',detail:'Mischie no contest',time,points:0})}else{d.noContest.end=time;d.events.unshift({id:uid(),type:'Fine no contest',detail:'Mischie no contest',time,points:0})}save();match()}function switchPeriod(){let d=S.draft;if(d.period===1){d.halfTime={...d.score};d.period=2}else d.period=1;d.running=false;d.seconds=0;save();match()}function undoLast(){let x=S.draft.events.shift();if(!x)return;if(x.points&&x.side)S.draft.score[x.side]=Math.max(0,S.draft.score[x.side]-x.points);save();match()}
 function closeIntervals(d){let end=(d.setup.minutesPerHalf||40)*60*2;d.homePlayers.forEach(p=>p.intervals?.forEach(i=>{if(i.out==null)i.out=end}));d.awayPlayers.forEach(p=>p.intervals?.forEach(i=>{if(i.out==null)i.out=end}))}function calcMinutes(p){return Math.round((p.intervals||[]).reduce((a,i)=>a+Math.max(0,(i.out??i.in)-i.in),0)/60)}function finishMatch(){let d=S.draft,open=d.temporary.filter(x=>!x.end);if(open.length&&!confirm(`${open.length} temporanee ancora aperte. Salvare comunque?`))return;if(d.noContest&&!d.noContest.end&&!confirm('No contest ancora attivo: sarà indicato fino al termine. Salvare?'))return;d.running=false;closeIntervals(d);d.homePlayers.forEach(p=>p.minutes=calcMinutes(p));d.awayPlayers.forEach(p=>p.minutes=0);d.savedAt=new Date().toISOString();S.matches.unshift(structuredClone(d));S.draft=null;save();go('history')}
 function rosters(){let block=(title,list)=>`<section class="card"><h2>${title} <span class="pill">${list.length}</span></h2>${list.map(p=>`<div class="roster-row"><b>#${p.number??'-'} ${esc(p.surname)} ${esc(p.name)}</b><small>${esc(p.birth||'')} · ${p.status==='FIELD'?'Titolare':'Panchina'} ${p.flags?.length?'· '+p.flags.join('/') :''}</small></div>`).join('')||'<p class="help">Nessun giocatore.</p>'}</section>`;app.innerHTML=`<h1>Rose partita</h1>${block(S.setup.home,S.homeRoster)}${block(S.setup.away,S.awayRoster)}`}
-function official(m){return m.setup.venue==='TRASFERTA'?{home:m.setup.away,away:m.setup.home,hs:m.score.away,as:m.score.home}:{home:m.setup.home,away:m.setup.away,hs:m.score.home,as:m.score.away}}function history(){app.innerHTML=`<div class="head"><h1>Storico</h1><div class="actions"><button id="exportAll" class="btn">Esporta statistiche</button><button id="deleteAll" class="danger">Cancella tutto</button></div></div>${S.matches.map(m=>{let o=official(m);return`<button class="card hist" data-match="${m.id}"><span><b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b><small>${esc(m.setup.date)} · ${esc(m.setup.category)}</small></span><span class="count">${m.events.length}<small>eventi</small></span></button>`}).join('')||'<section class="card">Nessuna partita salvata.</section>'}`;document.querySelectorAll('[data-match]').forEach(b=>b.onclick=()=>matchDetail(b.dataset.match));document.querySelector('#exportAll').onclick=exportAllStats;document.querySelector('#deleteAll').onclick=()=>{if(confirm('Cancellare tutto lo storico?')&&confirm('Conferma definitiva?')){S.matches=[];save();history()}}}
+function official(m){return m.setup.venue==='TRASFERTA'?{home:m.setup.away,away:m.setup.home,hs:m.score.away,as:m.score.home}:{home:m.setup.home,away:m.setup.away,hs:m.score.home,as:m.score.away}}
+/*
+funzione sostituita per versione pro
+function history(){app.innerHTML=`<div class="head"><h1>Storico</h1><div class="actions"><button id="exportAll" class="btn">Esporta statistiche</button><button id="deleteAll" class="danger">Cancella tutto</button></div></div>${S.matches.map(m=>{let o=official(m);return`<button class="card hist" data-match="${m.id}"><span><b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b><small>${esc(m.setup.date)} · ${esc(m.setup.category)}</small></span><span class="count">${m.events.length}<small>eventi</small></span></button>`}).join('')||'<section class="card">Nessuna partita salvata.</section>'}`;document.querySelectorAll('[data-match]').forEach(b=>b.onclick=()=>matchDetail(b.dataset.match));document.querySelector('#exportAll').onclick=exportAllStats;document.querySelector('#deleteAll').onclick=()=>{if(confirm('Cancellare tutto lo storico?')&&confirm('Conferma definitiva?')){S.matches=[];save();history()}}}
+*/
+function history(){
+
+ const lic =
+   window.RMMLicense?.get?.() ||
+   { type:'FREE' };
+
+ const licLabel =
+   lic.type === 'SOCIETA'
+     ? '🏢 SOCIETA'
+     : lic.type === 'PRO'
+       ? '🔑 PRO'
+       : '🔓 FREE';
+
+ app.innerHTML = `
+ <div class="head">
+   <h1>Storico</h1>
+
+   <div class="actions">
+
+     <button id="exportAll" class="btn">
+       Esporta statistiche
+     </button>
+
+     <button id="licenseBtn" class="outline">
+       ${licLabel}
+     </button>
+
+     <button id="deleteAll" class="danger">
+       Cancella tutto
+     </button>
+
+   </div>
+ </div>
+
+ ${
+   S.matches.map(m=>{
+     let o=official(m);
+
+     return `
+     <button class="card hist" data-match="${m.id}">
+       <span>
+         <b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b>
+         <small>
+           ${esc(m.setup.date)} · ${esc(m.setup.category)}
+         </small>
+       </span>
+
+       <span class="count">
+         ${m.events.length}
+         <small>eventi</small>
+       </span>
+     </button>
+     `;
+   }).join('') ||
+   '<section class="card">Nessuna partita salvata.</section>'
+ }
+ `;
+
+ document
+   .querySelectorAll('[data-match]')
+   .forEach(
+     b => b.onclick = () =>
+       matchDetail(b.dataset.match)
+   );
+
+ document.querySelector('#exportAll').onclick =
+   exportAllStats;
+
+ document.querySelector('#licenseBtn').onclick =
+   () => RMMLicense.show();
+
+ document.querySelector('#deleteAll').onclick =
+   () => {
+
+     if (
+       confirm('Cancellare tutto lo storico?') &&
+       confirm('Conferma definitiva?')
+     ) {
+
+       S.matches = [];
+
+       save();
+
+       history();
+     }
+   };
+}
 function matchDetail(id){let m=S.matches.find(x=>x.id===id),o=official(m);document.body.insertAdjacentHTML('beforeend',`<div class="modal"><div class="modalbox"><button id="closeDetail" class="close">✕</button><h2>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</h2><div class="tabs"><button data-tab="events">Eventi</button><button data-tab="lineups">Formazioni</button><button data-tab="report">Tabellino</button></div><div id="detailBody"></div><div class="actions"><button id="txt" class="btn">Esporta TXT</button><button id="xlsx" class="outline">Excel partita</button></div></div></div>`);let modal=document.querySelector('.modal');document.querySelector('#closeDetail').onclick=()=>modal.remove();let body=document.querySelector('#detailBody');function tab(t){if(t==='events')body.innerHTML=m.events.map(eventHtml).join('');if(t==='lineups')body.innerHTML=lineupHtml(m);if(t==='report')body.innerHTML=`<pre class="report">${esc(generateReport(m))}</pre>`}document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));document.querySelector('#txt').onclick=()=>downloadText(reportFileName(m),generateReport(m));document.querySelector('#xlsx').onclick=()=>exportMatchExcel(m);tab('events')}
 function lineupHtml(m){let part=(title,r)=>`<h3>${esc(title)}</h3>${r.map(p=>`<div class="roster-row"><b>#${p.number??'-'} ${esc(displayName(p,r))}</b><small>${p.status}${p.flags?.length?' · '+p.flags.join('/') :''}</small></div>`).join('')}`;return part(m.setup.home,m.homePlayers)+part(m.setup.away,m.awayPlayers)}function fmtDate(v){if(!v)return'';let [y,m,d]=v.split('-');return`${d}/${m}/${y}`}function reportName(p,r){return displayName(p,r)}function formationText(m,side){let r=side==='home'?m.homePlayers:m.awayPlayers,initial=r.filter(p=>p.intervals?.some(i=>i.in===0)).sort((a,b)=>(a.firOrder??999)-(b.firOrder??999));return initial.map(p=>{let changes=m.events.filter(x=>['Cambio','Cambio temporaneo'].includes(x.type)&&x.side===side&&x.outId===p.id).slice().reverse();return reportName(p,r)+(changes.length?' ('+changes.map(x=>`${x.time.label} ${reportName(r.find(q=>q.id===x.inId),r)}`).join(', ')+')':'')}).join('; ')}
 function markers(m){let ev=m.events.slice().reverse().filter(x=>['Meta','Trasformazione','Punizione','Drop'].includes(x.type)&&x.outcome!=='SBAGLIATO');return ev.map(x=>`${x.time.label} ${x.type==='Meta'?'m.':x.type==='Trasformazione'?'tr.':x.type==='Punizione'?'cp':'drop'} ${x.player||x.team}`).join(', ')}function notes(m){let xs=[];let yellow=m.events.filter(x=>x.type==='Giallo').slice().reverse();if(yellow.length)xs.push('gialli a '+yellow.map(x=>`${x.player||x.team} (${x.time.label})`).join(', '));let red=m.events.filter(x=>x.type==='Rosso').slice().reverse();if(red.length)xs.push('rossi a '+red.map(x=>`${x.player||x.team} (${x.time.label})`).join(', '));if(m.noContest)xs.push(`mischie no contest dal ${m.noContest.start.label}${m.noContest.end?' al '+m.noContest.end.label:' fino al termine'}`);let temps=m.temporary||[];if(temps.length)xs.push('sostituzioni temporanee: '+temps.map(x=>`${x.outName} → ${x.inName} (${x.start.label}${x.end?' - '+x.end.label:''})`).join('; '));return xs.length?'Note: '+xs.join('. ')+'.':''}
