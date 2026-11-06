@@ -116,7 +116,7 @@ function history(){
      }
    };
 }
-*/
+***** 2
 function history(){
 
   const lic =
@@ -223,6 +223,222 @@ function history(){
         history();
       }
     };
+}
+*/
+function history(){
+
+  const lic =
+    window.RMMLicense?.get?.() ||
+    { type:'FREE' };
+
+  const licType = lic.type || 'FREE';
+
+  let licLabel = '🔓 FREE';
+  let licClass = 'free';
+
+  if(licType === 'PRO'){
+    licLabel = '🔑 PRO';
+    licClass = 'pro';
+  }
+
+  if(licType === 'SOCIETA'){
+    licLabel = '🏢 SOCIETA';
+    licClass = 'societa';
+  }
+
+  app.innerHTML = `
+
+    <style>
+
+      .license-badge{
+        border:none;
+        border-radius:999px;
+        padding:8px 14px;
+        font-size:.85rem;
+        font-weight:700;
+        cursor:pointer;
+        transition:.2s;
+      }
+
+      .license-badge:hover{
+        transform:translateY(-1px);
+      }
+
+      .license-badge.free{
+        background:#f3f4f6;
+        color:#374151;
+      }
+
+      .license-badge.pro{
+        background:#f59e0b;
+        color:#fff;
+      }
+
+      .license-badge.societa{
+        background:#0f766e;
+        color:#fff;
+      }
+
+      .pro-banner{
+        margin:12px 0 16px;
+        padding:12px;
+        border-radius:12px;
+        background:#fff7ed;
+        border:1px solid #fdba74;
+        color:#9a3412;
+        font-size:.90rem;
+        line-height:1.4;
+      }
+
+      .pro-banner strong{
+        display:block;
+        margin-bottom:4px;
+      }
+
+    </style>
+
+    <div class="head">
+
+      <h1>Storico</h1>
+
+      <div class="actions">
+
+        <button id="exportAll" class="btn">
+          Esporta statistiche
+        </button>
+
+        <button
+          id="licenseBtn"
+          class="license-badge ${licClass}">
+          ${licLabel}
+        </button>
+
+        <button
+          id="deleteAll"
+          class="danger">
+          Cancella tutto
+        </button>
+
+      </div>
+
+    </div>
+
+    ${
+      licType === 'FREE'
+      ?
+      `
+        <div class="pro-banner">
+          <strong>🔒 Funzione PRO disponibile</strong>
+          Attiva una licenza PRO per esportare statistiche,
+          utilizzare le future dashboard avanzate e
+          sbloccare tutte le funzionalità premium.
+        </div>
+      `
+      :
+      ''
+    }
+
+    ${
+      S.matches.map(m=>{
+
+        const o = official(m);
+
+        return `
+          <button
+            class="card hist"
+            data-match="${m.id}">
+
+            <span>
+
+              <b>
+                ${esc(o.home)}
+                ${o.hs} - ${o.as}
+                ${esc(o.away)}
+              </b>
+
+              <small>
+                ${esc(m.setup.date)}
+                ·
+                ${esc(m.setup.category)}
+              </small>
+
+            </span>
+
+            <span class="count">
+
+              ${m.events.length}
+
+              <small>
+                eventi
+              </small>
+
+            </span>
+
+          </button>
+        `;
+
+      }).join('')
+      ||
+      '<section class="card">Nessuna partita salvata.</section>'
+    }
+
+  `;
+
+  document
+    .querySelectorAll('[data-match]')
+    .forEach(
+      b => b.onclick =
+        () => matchDetail(b.dataset.match)
+    );
+
+  document
+    .querySelector('#licenseBtn')
+    .onclick =
+      () => RMMLicense.show();
+
+  document
+    .querySelector('#exportAll')
+    .onclick = () => {
+
+      const lic =
+        RMMLicense.get();
+
+      if(
+        lic.type !== 'PRO' &&
+        lic.type !== 'SOCIETA'
+      ){
+        RMMLicense.show();
+        return;
+      }
+
+      exportAllStats();
+
+    };
+
+  document
+    .querySelector('#deleteAll')
+    .onclick = () => {
+
+      if(
+        confirm(
+          'Cancellare tutto lo storico?'
+        )
+        &&
+        confirm(
+          'Conferma definitiva?'
+        )
+      ){
+
+        S.matches = [];
+
+        save();
+
+        history();
+
+      }
+
+    };
+
 }
 function matchDetail(id){let m=S.matches.find(x=>x.id===id),o=official(m);document.body.insertAdjacentHTML('beforeend',`<div class="modal"><div class="modalbox"><button id="closeDetail" class="close">✕</button><h2>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</h2><div class="tabs"><button data-tab="events">Eventi</button><button data-tab="lineups">Formazioni</button><button data-tab="report">Tabellino</button></div><div id="detailBody"></div><div class="actions"><button id="txt" class="btn">Esporta TXT</button><button id="xlsx" class="outline">Excel partita</button></div></div></div>`);let modal=document.querySelector('.modal');document.querySelector('#closeDetail').onclick=()=>modal.remove();let body=document.querySelector('#detailBody');function tab(t){if(t==='events')body.innerHTML=m.events.map(eventHtml).join('');if(t==='lineups')body.innerHTML=lineupHtml(m);if(t==='report')body.innerHTML=`<pre class="report">${esc(generateReport(m))}</pre>`}document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));document.querySelector('#txt').onclick=()=>downloadText(reportFileName(m),generateReport(m));document.querySelector('#xlsx').onclick=()=>exportMatchExcel(m);tab('events')}
 function lineupHtml(m){let part=(title,r)=>`<h3>${esc(title)}</h3>${r.map(p=>`<div class="roster-row"><b>#${p.number??'-'} ${esc(displayName(p,r))}</b><small>${p.status}${p.flags?.length?' · '+p.flags.join('/') :''}</small></div>`).join('')}`;return part(m.setup.home,m.homePlayers)+part(m.setup.away,m.awayPlayers)}function fmtDate(v){if(!v)return'';let [y,m,d]=v.split('-');return`${d}/${m}/${y}`}function reportName(p,r){return displayName(p,r)}function formationText(m,side){let r=side==='home'?m.homePlayers:m.awayPlayers,initial=r.filter(p=>p.intervals?.some(i=>i.in===0)).sort((a,b)=>(a.firOrder??999)-(b.firOrder??999));return initial.map(p=>{let changes=m.events.filter(x=>['Cambio','Cambio temporaneo'].includes(x.type)&&x.side===side&&x.outId===p.id).slice().reverse();return reportName(p,r)+(changes.length?' ('+changes.map(x=>`${x.time.label} ${reportName(r.find(q=>q.id===x.inId),r)}`).join(', ')+')':'')}).join('; ')}
