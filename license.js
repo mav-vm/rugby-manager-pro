@@ -543,7 +543,7 @@ function showUpgrade(feature = '') {
 
     showLicense();
 }
-
+/*
 window.RMMLicense = {
 
     get: getLicense,
@@ -570,4 +570,39 @@ window.RMMLicense = {
 setTimeout(
     () => validateCurrentLicense(),
     1000
+);
+*/
+window.RMMLicense = {
+
+    get: getLicense,
+
+    save: saveLicense,
+
+    show: showLicense,
+
+    activate: activateLicense,
+
+    validate: validateCurrentLicense,
+
+    label: getLicenseLabel,
+
+    isFree,
+
+    isPro,
+
+    isSocieta,
+
+    showUpgrade
+};
+
+// verifica iniziale dopo l'avvio dell'app
+setTimeout(
+    () => validateCurrentLicense(),
+    1000
+);
+
+// verifica automatica ogni 30 minuti
+setInterval(
+    () => validateCurrentLicense(),
+    30 * 60 * 1000
 );
