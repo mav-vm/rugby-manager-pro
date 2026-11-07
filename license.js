@@ -1,11 +1,25 @@
 'use strict';
 
+
+
 /*
  Rugby Match Manager PRO
- Gestione licenze v1.0
+ Gestione licenze v1.3.0
+
+ v1.3.0
+ - Verifica online licenze tramite GitHub Pages
+ - Supporto SHA-256
+ - Supporto stati ACTIVE / SUSPENDED / REVOKED
+ - InstallationId locale
+ - Controllo periodico licenza
+ - Supporto piani FREE / PRO / SOCIETA
+
+ Server licenze:
+ https://mav-vm.github.io/rugby-license-data/licenses.json
 */
 
 const LICENSE_KEY = 'rmmLicense';
+const INSTALLATION_KEY = 'rmmInstallationId';
 
 const LICENSE_SERVER =
     'https://mav-vm.github.io/rugby-license-data/licenses.json';
@@ -16,22 +30,62 @@ function defaultLicense() {
         hash: '',
         type: 'FREE',
         status: 'inactive',
+        installationId: '',
         activatedAt: null,
         checkedAt: null
     };
 }
 
+function getInstallationId() {
+
+    let id =
+        localStorage.getItem(
+            INSTALLATION_KEY
+        );
+
+    if (!id) {
+
+        id =
+            crypto.randomUUID
+                ? crypto.randomUUID()
+                : (
+                    Date.now() +
+                    '-' +
+                    Math.random()
+                );
+
+        localStorage.setItem(
+            INSTALLATION_KEY,
+            id
+        );
+    }
+
+    return id;
+}
+
 function getLicense() {
+
     try {
-        return JSON.parse(
-            localStorage.getItem(LICENSE_KEY)
-        ) || defaultLicense();
+
+        return (
+            JSON.parse(
+                localStorage.getItem(
+                    LICENSE_KEY
+                )
+            )
+            ||
+            defaultLicense()
+        );
+
     } catch {
+
         return defaultLicense();
+
     }
 }
 
 function saveLicense(data) {
+
     localStorage.setItem(
         LICENSE_KEY,
         JSON.stringify(data)
@@ -39,6 +93,7 @@ function saveLicense(data) {
 }
 
 async function sha256(text) {
+
     const msgUint8 =
         new TextEncoder().encode(text);
 
@@ -50,13 +105,16 @@ async function sha256(text) {
 
     const hashArray =
         Array.from(
-            new Uint8Array(hashBuffer)
+            new Uint8Array(
+                hashBuffer
+            )
         );
 
     return hashArray
-        .map(b =>
-            b.toString(16)
-             .padStart(2, '0')
+        .map(
+            b =>
+                b.toString(16)
+                 .padStart(2, '0')
         )
         .join('');
 }
@@ -72,6 +130,7 @@ async function fetchLicenses() {
         );
 
     if (!response.ok) {
+
         throw new Error(
             'Impossibile contattare il server licenze'
         );
@@ -82,12 +141,17 @@ async function fetchLicenses() {
 
 async function activateLicense(code) {
 
-    code = String(code || '')
+    code =
+        String(code || '')
         .trim()
         .toUpperCase();
 
     if (!code) {
-        alert('Inserire un codice licenza.');
+
+        alert(
+            'Inserire un codice licenza.'
+        );
+
         return;
     }
 
@@ -102,8 +166,8 @@ async function activateLicense(code) {
         const match =
             (data.licenses || [])
             .find(
-                l =>
-                    String(l.hash)
+                x =>
+                    String(x.hash)
                     .toLowerCase() ===
                     hash.toLowerCase()
             );
@@ -118,29 +182,69 @@ async function activateLicense(code) {
         }
 
         if (
-            match.status !== 'ACTIVE'
+            match.status ===
+            'SUSPENDED'
         ) {
 
             alert(
-                'Licenza ' +
-                match.status
+                'Licenza sospesa dal gestore.'
+            );
+
+            return;
+        }
+
+        if (
+            match.status ===
+            'REVOKED'
+        ) {
+
+            alert(
+                'Licenza revocata dal gestore.'
+            );
+
+            return;
+        }
+
+        if (
+            match.status !==
+            'ACTIVE'
+        ) {
+
+            alert(
+                'Licenza non attiva.'
             );
 
             return;
         }
 
         const license = {
+
             activated: true,
+
             hash: hash,
-            type: match.type || 'PRO',
-            status: match.status,
+
+            installationId:
+                getInstallationId(),
+
+            type:
+                match.type ||
+                'PRO',
+
+            status:
+                match.status,
+
             activatedAt:
-                new Date().toISOString(),
+                new Date()
+                .toISOString(),
+
             checkedAt:
-                new Date().toISOString()
+                new Date()
+                .toISOString()
         };
 
-        saveLicense(license);
+        saveLicense(
+            license
+        );
 
         alert(
             'Licenza ' +
@@ -172,7 +276,9 @@ async function validateCurrentLicense() {
     const lic =
         getLicense();
 
-    if (!lic.activated) {
+    if (
+        !lic.activated
+    ) {
         return false;
     }
 
@@ -189,7 +295,9 @@ async function validateCurrentLicense() {
                     lic.hash
             );
 
-        if (!found) {
+        if (
+            !found
+        ) {
 
             saveLicense(
                 defaultLicense()
@@ -211,7 +319,8 @@ async function validateCurrentLicense() {
         }
 
         lic.checkedAt =
-            new Date().toISOString();
+            new Date()
+            .toISOString();
 
         lic.type =
             found.type;
@@ -219,7 +328,9 @@ async function validateCurrentLicense() {
         lic.status =
             found.status;
 
-        saveLicense(lic);
+        saveLicense(
+            lic
+        );
 
         return true;
 
@@ -258,6 +369,7 @@ function deactivateLicense() {
 }
 
 function closeLicense() {
+
     document
         .querySelector(
             '#licenseModal'
@@ -295,7 +407,7 @@ function showLicense() {
 
     document.body
         .insertAdjacentHTML(
-        'beforeend',
+            'beforeend',
 `
 <div class="modal" id="licenseModal">
 
@@ -354,35 +466,41 @@ function showLicense() {
 
 </div>
 `
-    );
+        );
 
     document
         .querySelector(
             '#licenseClose'
-        ).onclick =
+        )
+        .onclick =
         closeLicense;
 
     document
         .querySelector(
             '#licenseActivate'
-        ).onclick =
+        )
+        .onclick =
         () =>
         activateLicense(
             document
-            .querySelector(
-                '#licenseCode'
-            ).value
+                .querySelector(
+                    '#licenseCode'
+                )
+                .value
         );
 
     document
         .querySelector(
             '#licenseReset'
-        ).onclick =
+        )
+        .onclick =
         deactivateLicense;
 }
 
 function isFree() {
-    const lic = getLicense();
+
+    const lic =
+        getLicense();
 
     return (
         !lic.activated ||
@@ -391,7 +509,9 @@ function isFree() {
 }
 
 function isPro() {
-    const lic = getLicense();
+
+    const lic =
+        getLicense();
 
     return (
         lic.activated &&
@@ -403,7 +523,9 @@ function isPro() {
 }
 
 function isSocieta() {
-    const lic = getLicense();
+
+    const lic =
+        getLicense();
 
     return (
         lic.activated &&
@@ -413,108 +535,15 @@ function isSocieta() {
 
 function showUpgrade(feature = '') {
 
-    closeLicense();
-
-    document.body.insertAdjacentHTML(
-        'beforeend',
-`
-<div class="modal" id="upgradeModal">
-
-  <div class="modalbox">
-
-    <button
-      id="upgradeClose"
-      class="close">
-      ✕
-    </button>
-
-    <h2>🔑 Rugby Match Manager PRO</h2>
-
-    <p>
-
-      ${feature
-        ? `<b>Funzione richiesta:</b><br>${feature}`
-        : ''
-      }
-
-    </p>
-
-    <div
-      style="
-        margin:12px 0;
-        padding:12px;
-        border:1px solid #f59e0b;
-        border-radius:12px;
-        background:#fffbeb;
-      ">
-
-      <b>PRO</b>
-
-      <ul>
-        <li>Statistiche avanzate</li>
-        <li>Export completi Excel</li>
-        <li>Dashboard evolute</li>
-      </ul>
-
-      <b>SOCIETA</b>
-
-      <ul>
-        <li>Archivio società</li>
-        <li>Import multipli</li>
-        <li>Statistiche multi stagione</li>
-      </ul>
-
-    </div>
-
-    <button
-      id="upgradeActivate"
-      class="btn full">
-
-      ATTIVA LICENZA
-
-    </button>
-
-  </div>
-
-</div>
-`
+    alert(
+        feature
+            ? feature + '\n\nRichiede una licenza PRO.'
+            : 'Richiede una licenza PRO.'
     );
 
-    document
-      .querySelector('#upgradeClose')
-      .onclick = () =>
-        document
-          .querySelector('#upgradeModal')
-          ?.remove();
-
-    document
-      .querySelector('#upgradeActivate')
-      .onclick = () => {
-
-        document
-          .querySelector('#upgradeModal')
-          ?.remove();
-
-        showLicense();
-      };
+    showLicense();
 }
 
-/*
-window.RMMLicense = {
-
-    get: getLicense,
-
-    save: saveLicense,
-
-    show: showLicense,
-
-    activate: activateLicense,
-
-    validate: validateCurrentLicense,
-
-    label: getLicenseLabel
-};
-*/
 window.RMMLicense = {
 
     get: getLicense,
@@ -538,4 +567,7 @@ window.RMMLicense = {
     showUpgrade
 };
 
-validateCurrentLicense();
+setTimeout(
+    () => validateCurrentLicense(),
+    1000
+);
