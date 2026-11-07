@@ -233,51 +233,45 @@ function history(){
 
   const licType = lic.type || 'FREE';
 
-  let licLabel = '🔓 FREE';
-  let licClass = 'free';
-
-  if(licType === 'PRO'){
-    licLabel = '🔑 PRO';
-    licClass = 'pro';
-  }
-
-  if(licType === 'SOCIETA'){
-    licLabel = '🏢 SOCIETA';
-    licClass = 'societa';
-  }
+ 
 
   app.innerHTML = `
 
     <style>
 
-      .license-badge{
-        border:none;
-        border-radius:999px;
-        padding:8px 14px;
-        font-size:.85rem;
-        font-weight:700;
-        cursor:pointer;
-        transition:.2s;
-      }
+      	.license-switch{
+				  display:flex;
+				  align-items:center;
+				  gap:6px;
+				  padding:4px 8px;
+				  border-radius:999px;
+				  background:#fff;
+				  border:1px solid #d9d9d9;
+				  cursor:pointer;
+				  user-select:none;
+				  font-size:.85rem;
+				  font-weight:700;
+				  white-space:nowrap;
+				}
 
-      .license-badge:hover{
-        transform:translateY(-1px);
-      }
+				.license-switch:hover{
+				  background:#fafafa;
+				}
 
-      .license-badge.free{
-        background:#f3f4f6;
-        color:#374151;
-      }
+				.license-switch .tier{
+				  padding:4px 8px;
+				  border-radius:999px;
+				  color:#6b7280;
+				}
 
-      .license-badge.pro{
-        background:#f59e0b;
-        color:#fff;
-      }
+				.license-switch .tier.active{
+				  background:#d6a84f;
+				  color:#fff;
+				}
 
-      .license-badge.societa{
-        background:#0f766e;
-        color:#fff;
-      }
+				.license-switch .sep{
+				  color:#c0c0c0;
+				}
 
       .pro-banner{
         margin:12px 0 16px;
@@ -307,11 +301,27 @@ function history(){
           Esporta statistiche
         </button>
 
-        <button
-          id="licenseBtn"
-          class="license-badge ${licClass}">
-          ${licLabel}
-        </button>
+      <div
+				id="licenseBtn"
+				class="license-switch">
+
+				<span class="tier ${licType==='FREE' ? 'active' : ''}">
+  				🔓 FREE
+				</span>
+
+				<span class="sep">|</span>
+
+				<span class="tier ${licType==='PRO' ? 'active' : ''}">
+  				🔑 PRO
+				</span>
+
+				<span class="sep">|</span>
+
+				<span class="tier ${licType==='SOCIETA' ? 'active' : ''}">
+  				🏢 SOCIETA
+				</span>
+
+			</div>
 
         <button
           id="deleteAll"
@@ -403,13 +413,14 @@ function history(){
       const lic =
         RMMLicense.get();
 
-      if(
-        lic.type !== 'PRO' &&
-        lic.type !== 'SOCIETA'
-      ){
-        RMMLicense.show();
-        return;
-      }
+      if (
+    			!RMMLicense.isPro()
+			) {
+    			RMMLicense.showUpgrade(
+        	'Esportazione statistiche'
+    	);
+    	return;
+			}
 
       exportAllStats();
 
