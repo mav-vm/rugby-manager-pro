@@ -6,13 +6,15 @@
  Rugby Match Manager PRO
  Gestione licenze v1.3.0
 
- v1.3.0
- - Verifica online licenze tramite GitHub Pages
- - Supporto SHA-256
- - Supporto stati ACTIVE / SUSPENDED / REVOKED
- - InstallationId locale
- - Controllo periodico licenza
- - Supporto piani FREE / PRO / SOCIETA
+ v1.3.1
+- Verifica online licenze tramite GitHub Pages
+- Supporto SHA-256
+- Supporto stati ACTIVE / SUSPENDED / REVOKED
+- InstallationId locale
+- Controllo licenza all'avvio
+- Controllo licenza ogni 5 minuti
+- Controllo su focus e ritorno in foreground
+- Supporto piani FREE / PRO / SOCIETA
 
  Server licenze:
  https://mav-vm.github.io/rugby-license-data/licenses.json
@@ -296,27 +298,39 @@ async function validateCurrentLicense() {
             );
 
         if (
-            !found
-        ) {
+    				!found
+				) {
 
-            saveLicense(
-                defaultLicense()
-            );
+    			saveLicense(
+        		defaultLicense()
+    			);
 
-            return false;
-        }
+    			if (
+        			typeof render === 'function'
+    			) {
+        		render();
+    			}
+
+    			return false;
+				}
 
         if (
-            found.status !==
-            'ACTIVE'
-        ) {
+    				found.status !==
+    				'ACTIVE'
+				) {
 
-            saveLicense(
-                defaultLicense()
-            );
+    				saveLicense(
+        		defaultLicense()
+    				);
 
-            return false;
-        }
+    		if (
+        		typeof render === 'function'
+    		) {
+        		render();
+    		}
+
+    		return false;
+				}
 
         lic.checkedAt =
             new Date()
