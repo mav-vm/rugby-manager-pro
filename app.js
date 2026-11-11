@@ -23,208 +23,7 @@ function noContestFlow(){let d=S.draft,time=stamp();if(!d.noContest||d.noContest
 function closeIntervals(d){let end=(d.setup.minutesPerHalf||40)*60*2;d.homePlayers.forEach(p=>p.intervals?.forEach(i=>{if(i.out==null)i.out=end}));d.awayPlayers.forEach(p=>p.intervals?.forEach(i=>{if(i.out==null)i.out=end}))}function calcMinutes(p){return Math.round((p.intervals||[]).reduce((a,i)=>a+Math.max(0,(i.out??i.in)-i.in),0)/60)}function finishMatch(){let d=S.draft,open=d.temporary.filter(x=>!x.end);if(open.length&&!confirm(`${open.length} temporanee ancora aperte. Salvare comunque?`))return;if(d.noContest&&!d.noContest.end&&!confirm('No contest ancora attivo: sarà indicato fino al termine. Salvare?'))return;d.running=false;closeIntervals(d);d.homePlayers.forEach(p=>p.minutes=calcMinutes(p));d.awayPlayers.forEach(p=>p.minutes=0);d.savedAt=new Date().toISOString();S.matches.unshift(structuredClone(d));S.draft=null;save();go('history')}
 function rosters(){let block=(title,list)=>`<section class="card"><h2>${title} <span class="pill">${list.length}</span></h2>${list.map(p=>`<div class="roster-row"><b>#${p.number??'-'} ${esc(p.surname)} ${esc(p.name)}</b><small>${esc(p.birth||'')} · ${p.status==='FIELD'?'Titolare':'Panchina'} ${p.flags?.length?'· '+p.flags.join('/') :''}</small></div>`).join('')||'<p class="help">Nessun giocatore.</p>'}</section>`;app.innerHTML=`<h1>Rose partita</h1>${block(S.setup.home,S.homeRoster)}${block(S.setup.away,S.awayRoster)}`}
 function official(m){return m.setup.venue==='TRASFERTA'?{home:m.setup.away,away:m.setup.home,hs:m.score.away,as:m.score.home}:{home:m.setup.home,away:m.setup.away,hs:m.score.home,as:m.score.away}}
-/*
-funzione sostituita per versione pro
-function history(){app.innerHTML=`<div class="head"><h1>Storico</h1><div class="actions"><button id="exportAll" class="btn">Esporta statistiche</button><button id="deleteAll" class="danger">Cancella tutto</button></div></div>${S.matches.map(m=>{let o=official(m);return`<button class="card hist" data-match="${m.id}"><span><b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b><small>${esc(m.setup.date)} · ${esc(m.setup.category)}</small></span><span class="count">${m.events.length}<small>eventi</small></span></button>`}).join('')||'<section class="card">Nessuna partita salvata.</section>'}`;document.querySelectorAll('[data-match]').forEach(b=>b.onclick=()=>matchDetail(b.dataset.match));document.querySelector('#exportAll').onclick=exportAllStats;document.querySelector('#deleteAll').onclick=()=>{if(confirm('Cancellare tutto lo storico?')&&confirm('Conferma definitiva?')){S.matches=[];save();history()}}}
-*/
-/*
-****   1
-function history(){
 
- const lic =
-   window.RMMLicense?.get?.() ||
-   { type:'FREE' };
-
- const licLabel =
-   lic.type === 'SOCIETA'
-     ? '🏢 SOCIETA'
-     : lic.type === 'PRO'
-       ? '🔑 PRO'
-       : '🔓 FREE';
-
- app.innerHTML = `
- <div class="head">
-   <h1>Storico</h1>
-
-   <div class="actions">
-
-     <button id="exportAll" class="btn">
-       Esporta statistiche
-     </button>
-
-     <button id="licenseBtn" class="outline">
-       ${licLabel}
-     </button>
-
-     <button id="deleteAll" class="danger">
-       Cancella tutto
-     </button>
-
-   </div>
- </div>
-
- ${
-   S.matches.map(m=>{
-     let o=official(m);
-
-     return `
-     <button class="card hist" data-match="${m.id}">
-       <span>
-         <b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b>
-         <small>
-           ${esc(m.setup.date)} · ${esc(m.setup.category)}
-         </small>
-       </span>
-
-       <span class="count">
-         ${m.events.length}
-         <small>eventi</small>
-       </span>
-     </button>
-     `;
-   }).join('') ||
-   '<section class="card">Nessuna partita salvata.</section>'
- }
- `;
-
- document
-   .querySelectorAll('[data-match]')
-   .forEach(
-     b => b.onclick = () =>
-       matchDetail(b.dataset.match)
-   );
-
- document.querySelector('#exportAll').onclick =
-   exportAllStats;
-
- document.querySelector('#licenseBtn').onclick =
-   () => RMMLicense.show();
-
- document.querySelector('#deleteAll').onclick =
-   () => {
-
-     if (
-       confirm('Cancellare tutto lo storico?') &&
-       confirm('Conferma definitiva?')
-     ) {
-
-       S.matches = [];
-
-       save();
-
-       history();
-     }
-   };
-}
-***** 2
-function history(){
-
-  const lic =
-    window.RMMLicense?.get?.() ||
-    { type:'FREE' };
-
-  const licLabel =
-    lic.type === 'SOCIETA'
-      ? '🏢 SOCIETA'
-      : lic.type === 'PRO'
-        ? '🔑 PRO'
-        : '🔓 FREE';
-
-  app.innerHTML = `
-    <div class="head">
-      <h1>Storico</h1>
-
-      <div class="actions">
-
-        <button id="exportAll" class="btn">
-          Esporta statistiche
-        </button>
-
-        <button id="licenseBtn" class="outline">
-          ${licLabel}
-        </button>
-
-        <button id="deleteAll" class="danger">
-          Cancella tutto
-        </button>
-
-      </div>
-    </div>
-
-    ${
-      S.matches.map(m => {
-
-        const o = official(m);
-
-        return `
-          <button class="card hist" data-match="${m.id}">
-            <span>
-              <b>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</b>
-              <small>
-                ${esc(m.setup.date)} · ${esc(m.setup.category)}
-              </small>
-            </span>
-
-            <span class="count">
-              ${m.events.length}
-              <small>eventi</small>
-            </span>
-          </button>
-        `;
-
-      }).join('') ||
-
-      '<section class="card">Nessuna partita salvata.</section>'
-    }
-  `;
-
-  document
-    .querySelectorAll('[data-match]')
-    .forEach(
-      b => b.onclick = () =>
-        matchDetail(b.dataset.match)
-    );
-
-  document.querySelector('#exportAll').onclick = () => {
-
-    const lic =
-      window.RMMLicense?.get?.() ||
-      { type:'FREE' };
-
-    if (lic.type === 'FREE') {
-
-      alert(
-        'La funzione "Esporta statistiche" è disponibile solo nelle versioni PRO e SOCIETA.'
-      );
-
-      RMMLicense.show();
-
-      return;
-    }
-
-    exportAllStats();
-  };
-
-  document.querySelector('#licenseBtn').onclick =
-    () => RMMLicense.show();
-
-  document.querySelector('#deleteAll').onclick =
-    () => {
-
-      if (
-        confirm('Cancellare tutto lo storico?') &&
-        confirm('Conferma definitiva?')
-      ) {
-
-        S.matches = [];
-
-        save();
-
-        history();
-      }
-    };
-}
-*/
 function history(){
 
   const lic =
@@ -296,6 +95,9 @@ function history(){
       <h1>Storico</h1>
 
       <div class="actions">
+      	<button id="dashboardBtn" class="btn">
+  				Dashboard
+				</button>
 
         <button id="exportAll" class="btn">
           Esporta statistiche
@@ -405,6 +207,11 @@ function history(){
     .querySelector('#licenseBtn')
     .onclick =
       () => RMMLicense.show();
+      
+  document
+  	.querySelector('#dashboardBtn')
+  	.onclick =
+    	() => showDashboard();  
 
   document
     .querySelector('#exportAll')
@@ -478,4 +285,200 @@ function markers(m){let ev=m.events.slice().reverse().filter(x=>['Meta','Trasfor
 function generateReport(m){let o=official(m),half=m.halfTime?` (${m.setup.venue==='TRASFERTA'?m.halfTime.away+'-'+m.halfTime.home:m.halfTime.home+'-'+m.halfTime.away})`:'';return`TABELLINO\n${m.editorial?.location||''}${m.editorial?.location?' – ':''}${fmtDate(m.setup.date)}\n${o.home.toUpperCase()} - ${o.away.toUpperCase()} ${o.hs}-${o.as}${half}\n${m.setup.home.toUpperCase()}: ${formationText(m,'home')}. All. ${m.editorial?.coachHome||''}.\n${m.setup.away.toUpperCase()}: ${formationText(m,'away')}. All. ${m.editorial?.coachAway||''}.\nArbitro: ${m.editorial?.referee||''}\nMarcatori: ${markers(m)}.\n${notes(m)}`}
 function reportFileName(m){let o=official(m),safe=x=>String(x).replace(/[^a-z0-9]+/gi,'_');return`${m.setup.date}_${safe(o.home)}_${safe(o.away)}_tabellino.txt`}function downloadText(name,text){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain;charset=utf-8'}));a.download=name;a.click();URL.revokeObjectURL(a.href)}
 function exportMatchExcel(m){let wb=XLSX.utils.book_new(),o=official(m);XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{Data:m.setup.date,Categoria:m.setup.category,'Squadra casa':o.home,'Squadra trasferta':o.away,'Punti casa':o.hs,'Punti trasferta':o.as}]),'Partita');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(eventRows([m])),'Eventi');XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(presenceRows([m])),'Presenze BRIXIA');XLSX.writeFile(wb,`Partita_${m.setup.date}.xlsx`)}function matchRows(ms){return ms.map(m=>{let o=official(m);return{ID:m.id,Data:m.setup.date,Categoria:m.setup.category,Casa:o.home,Trasferta:o.away,PuntiCasa:o.hs,PuntiTrasferta:o.as,ParzialeCasa:m.halfTime?(m.setup.venue==='TRASFERTA'?m.halfTime.away:m.halfTime.home):'',ParzialeTrasferta:m.halfTime?(m.setup.venue==='TRASFERTA'?m.halfTime.home:m.halfTime.away):''}})}function eventRows(ms){return ms.flatMap(m=>m.events.slice().reverse().map(x=>({IDPartita:m.id,Data:m.setup.date,Tempo:x.time.period,Minuto:x.time.minute,Squadra:x.team,Giocatore:x.player||'',Evento:x.type,Esito:x.outcome||'',Punti:x.points||0})))}function presenceRows(ms){return ms.flatMap(m=>m.homePlayers.map(p=>({IDPartita:m.id,Data:m.setup.date,Squadra:m.setup.home,TesseraFIR:p.firCard||'',Numero:p.number,Cognome:p.surname,Nome:p.name,Nascita:p.birth,Titolare:p.intervals?.some(i=>i.in===0)?'SI':'NO',MinutiGiocati:p.minutes||0})))}function changeRows(ms){return ms.flatMap(m=>m.events.filter(x=>x.type.includes('Cambio')||x.type==='Fine temporanea').map(x=>({IDPartita:m.id,Data:m.setup.date,Squadra:x.team,Tempo:x.time.period,Minuto:x.time.minute,Dettaglio:x.detail,Tipo:x.type})))}function disciplineRows(ms){return ms.flatMap(m=>m.events.filter(x=>['Giallo','Rosso'].includes(x.type)).map(x=>({IDPartita:m.id,Data:m.setup.date,Squadra:x.team,Giocatore:x.player,Cartellino:x.type,Tempo:x.time.period,Minuto:x.time.minute})))}function playerStats(ms){let map={};for(let r of presenceRows(ms)){let k=r.TesseraFIR||`${r.Cognome}|${r.Nome}`,x=map[k]??={TesseraFIR:r.TesseraFIR,Cognome:r.Cognome,Nome:r.Nome,Presenze:0,Titolare:0,Minuti:0,Mete:0,TrasformazioniTentate:0,TrasformazioniRiuscite:0,PunizioniTentate:0,PunizioniRiuscite:0,DropTentati:0,DropRiusciti:0,Punti:0,Gialli:0,Rossi:0};x.Presenze++;x.Titolare+=r.Titolare==='SI';x.Minuti+=r.MinutiGiocati;map[k]=x}for(let m of ms)for(let e of m.events.filter(x=>x.side==='home'&&x.playerId)){let p=m.homePlayers.find(x=>x.id===e.playerId);if(!p)continue;let k=p.firCard||`${p.surname}|${p.name}`,x=map[k];if(!x)continue;if(e.type==='Meta')x.Mete++;if(e.type==='Trasformazione'){x.TrasformazioniTentate++;x.TrasformazioniRiuscite+=e.outcome==='RIUSCITO'}if(e.type==='Punizione'){x.PunizioniTentate++;x.PunizioniRiuscite+=e.outcome==='RIUSCITO'}if(e.type==='Drop'){x.DropTentati++;x.DropRiusciti+=e.outcome==='RIUSCITO'}if(e.type==='Giallo')x.Gialli++;if(e.type==='Rosso')x.Rossi++;x.Punti+=e.points||0}return Object.values(map)}function exportAllStats(){if(!S.matches.length)return toast('Nessuna partita');let wb=XLSX.utils.book_new(),add=(name,rows)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(rows),name);add('Partite',matchRows(S.matches));add('Eventi',eventRows(S.matches));add('Presenze BRIXIA',presenceRows(S.matches));add('Statistiche giocatori',playerStats(S.matches));add('Cambi',changeRows(S.matches));add('Disciplina',disciplineRows(S.matches));XLSX.writeFile(wb,'Rugby_Manager_Statistiche.xlsx')}
+function showDashboard(){
+
+    if(!RMMLicense.isPro()){
+
+        RMMLicense.showUpgrade(
+            'Dashboard PRO'
+        );
+
+        return;
+    }
+
+    const stats = calculateDashboardStats();
+
+    app.innerHTML = `
+
+        <h1>📊 Dashboard PRO</h1>
+
+        <section class="card">
+
+            <div class="dashboard-grid">
+
+                <div class="dashboard-card">
+                    <div class="value">${stats.matches}</div>
+                    <div class="label">Partite</div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="value">${stats.wins}</div>
+                    <div class="label">Vittorie</div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="value">${stats.tries}</div>
+                    <div class="label">Mete</div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="value">${stats.points}</div>
+                    <div class="label">Punti</div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <section class="card">
+
+            <h2>Riepilogo</h2>
+
+            <p>Pareggi: ${stats.draws}</p>
+
+            <p>Sconfitte: ${stats.losses}</p>
+
+            <p>% Vittorie: ${stats.winRate}%</p>
+
+        </section>
+
+        <section class="card">
+
+            <h2>Top Marcatori</h2>
+
+            ${renderTopScorers()}
+
+        </section>
+
+        <section class="card">
+
+            <button
+                class="btn full"
+                onclick="history()">
+                Torna allo storico
+            </button>
+
+        </section>
+
+    `;
+}
+function calculateDashboardStats(){
+
+    let matches = S.matches.length;
+
+    let wins = 0;
+    let losses = 0;
+    let draws = 0;
+
+    let tries = 0;
+    let points = 0;
+
+    S.matches.forEach(m => {
+
+        const home =
+            m.score.home || 0;
+
+        const away =
+            m.score.away || 0;
+
+        points += home;
+
+        if(home > away) wins++;
+        else if(home < away) losses++;
+        else draws++;
+
+        m.events.forEach(e => {
+
+            if(
+                e.side === 'home'
+                &&
+                e.type === 'Meta'
+            ){
+                tries++;
+            }
+
+        });
+
+    });
+
+    return {
+
+        matches,
+
+        wins,
+
+        losses,
+
+        draws,
+
+        tries,
+
+        points,
+
+        winRate:
+            matches
+            ?
+            (
+                wins * 100 / matches
+            ).toFixed(1)
+            :
+            0
+
+    };
+}
+function renderTopScorers(){
+
+    const players = {};
+
+    S.matches.forEach(m => {
+
+        m.events.forEach(e => {
+
+            if(
+                e.side !== 'home'
+                ||
+                !e.player
+            ){
+                return;
+            }
+
+            players[e.player] ??= 0;
+
+            players[e.player] +=
+                e.points || 0;
+
+        });
+
+    });
+
+    const rows =
+        Object.entries(players)
+        .sort(
+            (a,b) => b[1]-a[1]
+        )
+        .slice(0,10);
+
+    if(!rows.length){
+        return '<p>Nessun dato.</p>';
+    }
+
+    return `
+        <table>
+
+            <tr>
+                <th>Giocatore</th>
+                <th>Punti</th>
+            </tr>
+
+            ${rows.map(r => `
+                <tr>
+                    <td>${r[0]}</td>
+                    <td>${r[1]}</td>
+                </tr>
+            `).join('')}
+
+        </table>
+    `;
+}
+
 if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));render();
