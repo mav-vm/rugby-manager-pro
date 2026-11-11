@@ -451,7 +451,28 @@ function history(){
     };
 
 }
-function matchDetail(id){let m=S.matches.find(x=>x.id===id),o=official(m);document.body.insertAdjacentHTML('beforeend',`<div class="modal"><div class="modalbox"><button id="closeDetail" class="close">✕</button><h2>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</h2><div class="tabs"><button data-tab="events">Eventi</button><button data-tab="lineups">Formazioni</button><button data-tab="report">Tabellino</button></div><div id="detailBody"></div><div class="actions"><button id="txt" class="btn">Esporta TXT</button><button id="xlsx" class="outline">Excel partita</button></div></div></div>`);let modal=document.querySelector('.modal');document.querySelector('#closeDetail').onclick=()=>modal.remove();let body=document.querySelector('#detailBody');function tab(t){if(t==='events')body.innerHTML=m.events.map(eventHtml).join('');if(t==='lineups')body.innerHTML=lineupHtml(m);if(t==='report')body.innerHTML=`<pre class="report">${esc(generateReport(m))}</pre>`}document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));document.querySelector('#txt').onclick=()=>downloadText(reportFileName(m),generateReport(m));document.querySelector('#xlsx').onclick=()=>exportMatchExcel(m);tab('events')}
+function matchDetail(id){
+	let m=S.matches.find(x=>x.id===id),o=official(m);document.body.insertAdjacentHTML('beforeend',`<div class="modal"><div class="modalbox"><button id="closeDetail" class="close">✕</button><h2>${esc(o.home)} ${o.hs} - ${o.as} ${esc(o.away)}</h2><div class="tabs"><button data-tab="events">Eventi</button><button data-tab="lineups">Formazioni</button><button data-tab="report">Tabellino</button></div><div id="detailBody"></div><div class="actions"><button id="txt" class="btn">Esporta TXT</button><button id="xlsx" class="outline">Excel partita</button></div></div></div>`);let modal=document.querySelector('.modal');document.querySelector('#closeDetail').onclick=()=>modal.remove();let body=document.querySelector('#detailBody');function tab(t){if(t==='events')body.innerHTML=m.events.map(eventHtml).join('');if(t==='lineups')body.innerHTML=lineupHtml(m);if(t==='report')body.innerHTML=`<pre class="report">${esc(generateReport(m))}</pre>`}document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));document.querySelector('#txt').onclick=()=>downloadText(reportFileName(m),generateReport(m));
+	document.querySelector('#xlsx').onclick =
+() => {
+
+    if (
+        !RMMLicense.isPro()
+    ) {
+
+        RMMLicense.showUpgrade(
+            'Esportazione Excel partita'
+        );
+
+        return;
+    }
+
+    exportMatchExcel(m);
+};;tab('events')
+	
+	
+	}
+	
 function lineupHtml(m){let part=(title,r)=>`<h3>${esc(title)}</h3>${r.map(p=>`<div class="roster-row"><b>#${p.number??'-'} ${esc(displayName(p,r))}</b><small>${p.status}${p.flags?.length?' · '+p.flags.join('/') :''}</small></div>`).join('')}`;return part(m.setup.home,m.homePlayers)+part(m.setup.away,m.awayPlayers)}function fmtDate(v){if(!v)return'';let [y,m,d]=v.split('-');return`${d}/${m}/${y}`}function reportName(p,r){return displayName(p,r)}function formationText(m,side){let r=side==='home'?m.homePlayers:m.awayPlayers,initial=r.filter(p=>p.intervals?.some(i=>i.in===0)).sort((a,b)=>(a.firOrder??999)-(b.firOrder??999));return initial.map(p=>{let changes=m.events.filter(x=>['Cambio','Cambio temporaneo'].includes(x.type)&&x.side===side&&x.outId===p.id).slice().reverse();return reportName(p,r)+(changes.length?' ('+changes.map(x=>`${x.time.label} ${reportName(r.find(q=>q.id===x.inId),r)}`).join(', ')+')':'')}).join('; ')}
 function markers(m){let ev=m.events.slice().reverse().filter(x=>['Meta','Trasformazione','Punizione','Drop'].includes(x.type)&&x.outcome!=='SBAGLIATO');return ev.map(x=>`${x.time.label} ${x.type==='Meta'?'m.':x.type==='Trasformazione'?'tr.':x.type==='Punizione'?'cp':'drop'} ${x.player||x.team}`).join(', ')}function notes(m){let xs=[];let yellow=m.events.filter(x=>x.type==='Giallo').slice().reverse();if(yellow.length)xs.push('gialli a '+yellow.map(x=>`${x.player||x.team} (${x.time.label})`).join(', '));let red=m.events.filter(x=>x.type==='Rosso').slice().reverse();if(red.length)xs.push('rossi a '+red.map(x=>`${x.player||x.team} (${x.time.label})`).join(', '));if(m.noContest)xs.push(`mischie no contest dal ${m.noContest.start.label}${m.noContest.end?' al '+m.noContest.end.label:' fino al termine'}`);let temps=m.temporary||[];if(temps.length)xs.push('sostituzioni temporanee: '+temps.map(x=>`${x.outName} → ${x.inName} (${x.start.label}${x.end?' - '+x.end.label:''})`).join('; '));return xs.length?'Note: '+xs.join('. ')+'.':''}
 function generateReport(m){let o=official(m),half=m.halfTime?` (${m.setup.venue==='TRASFERTA'?m.halfTime.away+'-'+m.halfTime.home:m.halfTime.home+'-'+m.halfTime.away})`:'';return`TABELLINO\n${m.editorial?.location||''}${m.editorial?.location?' – ':''}${fmtDate(m.setup.date)}\n${o.home.toUpperCase()} - ${o.away.toUpperCase()} ${o.hs}-${o.as}${half}\n${m.setup.home.toUpperCase()}: ${formationText(m,'home')}. All. ${m.editorial?.coachHome||''}.\n${m.setup.away.toUpperCase()}: ${formationText(m,'away')}. All. ${m.editorial?.coachAway||''}.\nArbitro: ${m.editorial?.referee||''}\nMarcatori: ${markers(m)}.\n${notes(m)}`}

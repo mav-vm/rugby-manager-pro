@@ -339,9 +339,9 @@ function history(){
       `
         <div class="pro-banner">
           <strong>🔒 Funzione PRO disponibile</strong>
-          Attiva una licenza PRO per esportare statistiche,
-          utilizzare le future dashboard avanzate e
-          sbloccare tutte le funzionalità premium.
+          Attiva una licenza PRO per esportare statistiche Excel,
+          analizzare lo storico delle partite e accedere
+          alle future dashboard avanzate.
         </div>
       `
       :
