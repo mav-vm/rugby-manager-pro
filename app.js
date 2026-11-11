@@ -327,9 +327,7 @@ function showDashboard(){
                 </div>
 
             </div>
-        /*
-        grafici
-        */    
+       
         <section class="card">
 
     							<h2>📈 Andamento stagione</h2>

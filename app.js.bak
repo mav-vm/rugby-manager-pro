@@ -327,6 +327,16 @@ function showDashboard(){
                 </div>
 
             </div>
+        /*
+        grafici
+        */    
+        <section class="card">
+
+    							<h2>📈 Andamento stagione</h2>
+
+    							${renderPointsChart()}
+
+				</section>
 
         </section>
 
@@ -426,6 +436,7 @@ function calculateDashboardStats(){
 
     };
 }
+
 function renderTopScorers(){
 
     const players = {};
@@ -435,49 +446,97 @@ function renderTopScorers(){
         m.events.forEach(e => {
 
             if(
-                e.side !== 'home'
-                ||
-                !e.player
+                e.side === 'home' &&
+                e.player
             ){
-                return;
+                players[e.player] =
+                    (players[e.player] || 0)
+                    +
+                    (e.points || 0);
             }
-
-            players[e.player] ??= 0;
-
-            players[e.player] +=
-                e.points || 0;
 
         });
 
     });
 
-    const rows =
-        Object.entries(players)
-        .sort(
-            (a,b) => b[1]-a[1]
-        )
+    const rows = Object
+        .entries(players)
+        .sort((a,b)=>b[1]-a[1])
         .slice(0,10);
 
     if(!rows.length){
         return '<p>Nessun dato.</p>';
     }
 
+    const max = rows[0][1];
+
+    return rows.map(r=>`
+
+        <div class="rank-row">
+
+            <div class="rank-name">
+                ${r[0]}
+            </div>
+
+            <div class="rank-bar">
+
+                <div
+                    class="rank-fill"
+                    style="
+                      width:${(r[1]/max)*100}%
+                    ">
+                </div>
+
+            </div>
+
+            <div class="rank-value">
+                ${r[1]}
+            </div>
+
+        </div>
+
+    `).join('');
+
+}
+function renderPointsChart(){
+
+    if(!S.matches.length){
+        return '<p>Nessuna partita disponibile.</p>';
+    }
+
+    const max = Math.max(
+        ...S.matches.map(m => m.score.home || 0),
+        1
+    );
+
     return `
-        <table>
+        <div class="chart-bars">
 
-            <tr>
-                <th>Giocatore</th>
-                <th>Punti</th>
-            </tr>
+            ${S.matches
+                .slice()
+                .reverse()
+                .map((m,i)=>`
 
-            ${rows.map(r => `
-                <tr>
-                    <td>${r[0]}</td>
-                    <td>${r[1]}</td>
-                </tr>
+                <div class="bar-wrap">
+
+                    <div
+                        class="bar"
+                        style="
+                            height:${
+                                ((m.score.home||0)/max)*200
+                            }px
+                        ">
+                    </div>
+
+                    <small>
+                        G${i+1}
+                    </small>
+
+                </div>
+
             `).join('')}
 
-        </table>
+        </div>
     `;
 }
 
