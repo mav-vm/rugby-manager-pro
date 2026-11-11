@@ -327,7 +327,6 @@ function showDashboard(){
                 </div>
 
             </div>
-       
         <section class="card">
 
     							<h2>📈 Andamento stagione</h2>

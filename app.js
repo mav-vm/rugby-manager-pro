@@ -1,4 +1,6 @@
 const KEY='rugby-fir-v26';
+const APP_VERSION = '1.3';
+
 const INIT={setup:{date:'',category:'Under 18',home:'BRIXIA.',away:'Ospiti',venue:'CASA',minutesPerHalf:40,location:'',referee:'',coachHome:'',coachAway:''},homeRoster:[],awayRoster:[],matches:[],draft:null,fir:null};
 let S;try{S=Object.assign(structuredClone(INIT),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{S=structuredClone(INIT)}
 let page='setup',timer;const app=document.querySelector('#app');
@@ -537,4 +539,83 @@ function renderPointsChart(){
     `;
 }
 
-if('serviceWorker'in navigator)addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js'));render();
+async function checkVersion(){
+
+    try{
+
+        const response = await fetch(
+            'version.json?t=' + Date.now(),
+            {
+                cache:'no-store'
+            }
+        );
+
+        const remote = await response.json();
+
+        if(
+            remote.version &&
+            remote.version !== APP_VERSION
+        ){
+
+            const upgrade = confirm(
+                `È disponibile Rugby Match Manager PRO v${remote.version}.\n\nAggiornare ora?`
+            );
+
+            if(!upgrade){
+                return;
+            }
+
+            if('serviceWorker' in navigator){
+
+                const regs =
+                    await navigator.serviceWorker.getRegistrations();
+
+                for(const reg of regs){
+                    await reg.unregister();
+                }
+
+                const keys =
+                    await caches.keys();
+
+                await Promise.all(
+                    keys.map(
+                        k => caches.delete(k)
+                    )
+                );
+            }
+
+            location.reload();
+
+        }
+
+    }catch(err){
+
+        console.log(
+            'Controllo versione non disponibile'
+        );
+
+    }
+
+}
+
+if('serviceWorker' in navigator){
+
+    window.addEventListener(
+        'load',
+        async () => {
+
+            await navigator.serviceWorker.register(
+                'service-worker.js'
+            );
+
+            setTimeout(
+                checkVersion,
+                2000
+            );
+
+        }
+    );
+
+}
+
+render();
