@@ -1,6 +1,32 @@
 const KEY='rugby-fir-v26';
 const APP_VERSION = '1.3';
 
+document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+
+        const versionEl =
+            document.getElementById(
+                'appVersion'
+            );
+
+        if(versionEl){
+
+            versionEl.textContent =
+                ' v' + APP_VERSION;
+
+        }
+
+        document.title =
+            'Rugby Match Manager PRO v'
+            + APP_VERSION;
+
+    }
+);
+
+
+
+
 const INIT={setup:{date:'',category:'Under 18',home:'BRIXIA.',away:'Ospiti',venue:'CASA',minutesPerHalf:40,location:'',referee:'',coachHome:'',coachAway:''},homeRoster:[],awayRoster:[],matches:[],draft:null,fir:null};
 let S;try{S=Object.assign(structuredClone(INIT),JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{S=structuredClone(INIT)}
 let page='setup',timer;const app=document.querySelector('#app');
@@ -617,16 +643,6 @@ if('serviceWorker' in navigator){
     );
 
 }
-const versionElement =
-    document.getElementById(
-        'appVersion'
-    );
 
-if(versionElement){
-
-    versionElement.textContent =
-        'v' + APP_VERSION;
-
-}
 
 render();
