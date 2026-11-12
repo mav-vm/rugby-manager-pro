@@ -30,3 +30,56 @@
     transform:translateY(-2px);
     transition:.2s;
 }
+.chart-bars{
+    display:flex;
+    align-items:flex-end;
+    gap:8px;
+    height:240px;
+    margin-top:12px;
+}
+
+.bar-wrap{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-end;
+}
+
+.bar{
+    width:100%;
+    max-width:40px;
+    background:#0284c7;
+    border-radius:8px 8px 0 0;
+}
+
+.rank-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:8px 0;
+}
+
+.rank-name{
+    width:120px;
+    font-size:14px;
+}
+
+.rank-bar{
+    flex:1;
+    height:18px;
+    background:#e5e7eb;
+    border-radius:99px;
+    overflow:hidden;
+}
+
+.rank-fill{
+    height:100%;
+    background:#087f5b;
+}
+
+.rank-value{
+    width:40px;
+    text-align:right;
+    font-weight:700;
+}

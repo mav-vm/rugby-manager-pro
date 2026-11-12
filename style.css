@@ -83,3 +83,24 @@
     text-align:right;
     font-weight:700;
 }
+.dashboard-table{
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0;
+    font-size:.9rem;
+}
+
+.dashboard-table th{
+    text-align:left;
+    padding:8px;
+    border-bottom:2px solid #ddd;
+}
+
+.dashboard-table td{
+    padding:8px;
+    border-bottom:1px solid #eee;
+}
+
+.dashboard-table tr:last-child td{
+    border-bottom:none;
+}

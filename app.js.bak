@@ -1,28 +1,5 @@
 const KEY='rugby-fir-v26';
-const APP_VERSION = '1.3';
 
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
-
-        const versionEl =
-            document.getElementById(
-                'appVersion'
-            );
-
-        if(versionEl){
-
-            versionEl.textContent =
-                ' v' + APP_VERSION;
-
-        }
-
-        document.title =
-            'Rugby Match Manager PRO v'
-            + APP_VERSION;
-
-    }
-);
 
 
 
@@ -564,6 +541,52 @@ function renderPointsChart(){
         </div>
     `;
 }
+async function loadVersion(){
+
+    try{
+
+        const response = await fetch(
+            'version.json?t=' + Date.now(),
+            {
+                cache:'no-store'
+            }
+        );
+
+        const data = await response.json();
+
+        const version =
+            data.version || '?';
+
+        document.title =
+            'Rugby Match Manager PRO v' +
+            version;
+
+        const appVersion =
+            document.getElementById(
+                'appVersion'
+            );
+
+        if(appVersion){
+
+            appVersion.textContent =
+                ' v' + version;
+
+        }
+
+        return version;
+
+    }catch(err){
+
+        console.error(
+            'Errore lettura versione',
+            err
+        );
+
+        return null;
+
+    }
+
+}
 
 async function checkVersion(){
 
@@ -576,28 +599,43 @@ async function checkVersion(){
             }
         );
 
-        const remote = await response.json();
+        const remote =
+            await response.json();
+
+        const currentVersion =
+            document
+            .getElementById(
+                'appVersion'
+            )
+            ?.textContent
+            ?.replace('v','')
+            ?.trim();
 
         if(
             remote.version &&
-            remote.version !== APP_VERSION
+            currentVersion &&
+            remote.version !== currentVersion
         ){
 
-            const upgrade = confirm(
-                `È disponibile Rugby Match Manager PRO v${remote.version}.\n\nAggiornare ora?`
+            const ok = confirm(
+                `Nuova versione disponibile (${remote.version}).\n\nAggiornare adesso?`
             );
 
-            if(!upgrade){
+            if(!ok){
                 return;
             }
 
             if('serviceWorker' in navigator){
 
                 const regs =
-                    await navigator.serviceWorker.getRegistrations();
+                    await navigator
+                    .serviceWorker
+                    .getRegistrations();
 
                 for(const reg of regs){
+
                     await reg.unregister();
+
                 }
 
                 const keys =
@@ -608,6 +646,7 @@ async function checkVersion(){
                         k => caches.delete(k)
                     )
                 );
+
             }
 
             location.reload();
@@ -617,32 +656,44 @@ async function checkVersion(){
     }catch(err){
 
         console.log(
-            'Controllo versione non disponibile'
+            'Controllo aggiornamenti non disponibile'
         );
 
     }
 
 }
 
-if('serviceWorker' in navigator){
+window.addEventListener(
+    'load',
+    async () => {
 
-    window.addEventListener(
-        'load',
-        async () => {
+        await loadVersion();
 
-            await navigator.serviceWorker.register(
-                'service-worker.js'
-            );
+        if(
+            'serviceWorker'
+            in navigator
+        ){
 
-            setTimeout(
-                checkVersion,
-                2000
-            );
+            await navigator
+                .serviceWorker
+                .register(
+                    'service-worker.js'
+                );
 
         }
-    );
 
-}
+        setInterval(
+            checkVersion,
+            30000
+        );
+
+    }
+);
+
+render();
+
+
+
 
 
 render();

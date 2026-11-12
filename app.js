@@ -293,22 +293,16 @@ function exportMatchExcel(m){let wb=XLSX.utils.book_new(),o=official(m);XLSX.uti
 function showDashboard(){
 
     if(!RMMLicense.isPro()){
-
-        RMMLicense.showUpgrade(
-            'Dashboard PRO'
-        );
-
+        RMMLicense.showUpgrade('Dashboard PRO');
         return;
     }
 
     const stats = calculateDashboardStats();
 
     app.innerHTML = `
-
         <h1>📊 Dashboard PRO</h1>
 
         <section class="card">
-
             <div class="dashboard-grid">
 
                 <div class="dashboard-card">
@@ -332,48 +326,58 @@ function showDashboard(){
                 </div>
 
             </div>
-        <section class="card">
-
-    							<h2>📈 Andamento stagione</h2>
-
-    							${renderPointsChart()}
-
-				</section>
-
         </section>
 
         <section class="card">
+            <h2>📈 Andamento stagione</h2>
+            ${renderPointsChart()}
+        </section>
 
+        <section class="card">
             <h2>Riepilogo</h2>
 
+            <p>Vittorie: ${stats.wins}</p>
             <p>Pareggi: ${stats.draws}</p>
-
             <p>Sconfitte: ${stats.losses}</p>
 
-            <p>% Vittorie: ${stats.winRate}%</p>
-
+            <p><strong>% Vittorie: ${stats.winRate}%</strong></p>
         </section>
 
         <section class="card">
-
             <h2>Top Marcatori</h2>
-
             ${renderTopScorers()}
-
         </section>
 
         <section class="card">
+            <h2>🏉 Mete</h2>
+            ${renderTopTries()}
+        </section>
 
+        <section class="card">
+            <h2>🎯 Calciatori</h2>
+            ${renderKickers()}
+        </section>
+
+        <section class="card">
+            <h2>🟨 Disciplina</h2>
+            ${renderDiscipline()}
+        </section>
+
+        <section class="card">
             <button
                 class="btn full"
                 onclick="history()">
+
                 Torna allo storico
+
             </button>
-
         </section>
-
     `;
 }
+
+
+
+
 function calculateDashboardStats(){
 
     let matches = S.matches.length;
@@ -506,39 +510,279 @@ function renderPointsChart(){
         return '<p>Nessuna partita disponibile.</p>';
     }
 
-    const max = Math.max(
-        ...S.matches.map(m => m.score.home || 0),
-        1
-    );
+    const max =
+        Math.max(
+            ...S.matches.map(
+                m => m.score.home || 0
+            ),
+            1
+        );
 
     return `
         <div class="chart-bars">
 
-            ${S.matches
+            ${
+                S.matches
                 .slice()
                 .reverse()
-                .map((m,i)=>`
+                .map((m,i)=>{
 
-                <div class="bar-wrap">
+                    let value =
+                        m.score.home || 0;
 
-                    <div
-                        class="bar"
-                        style="
-                            height:${
-                                ((m.score.home||0)/max)*200
-                            }px
-                        ">
+                    let color =
+                        value > (m.score.away||0)
+                        ? '#16a34a'
+                        : value < (m.score.away||0)
+                            ? '#dc2626'
+                            : '#eab308';
+
+                    return `
+                        <div class="bar-wrap">
+
+                            <div
+                                class="bar"
+                                style="
+                                    background:${color};
+                                    height:${(value/max)*200}px;
+                                ">
+                            </div>
+
+                            <small>
+                                ${value}
+                            </small>
+
+                        </div>
+                    `;
+                })
+                .join('')
+            }
+
+        </div>
+    `;
+}
+
+function getDashboardPlayerStats(){
+    return playerStats(S.matches);
+}
+function playerDisplayName(p, all){
+
+    const sameSurname =
+        all.filter(
+            x =>
+                norm(x.Cognome)
+                ===
+                norm(p.Cognome)
+        ).length;
+
+    if(sameSurname > 1){
+        return `${p.Nome} ${p.Cognome}`;
+    }
+
+    return `${(p.Nome||'').charAt(0)}. ${p.Cognome}`;
+}
+function renderTopTries(){
+
+    const players =
+        getDashboardPlayerStats()
+        .filter(x => x.Mete > 0)
+        .sort(
+            (a,b)=>
+                b.Mete-a.Mete
+        )
+        .slice(0,10);
+
+    if(!players.length){
+        return '<p>Nessuna meta registrata.</p>';
+    }
+
+    const max =
+        players[0].Mete;
+
+    return `
+
+        <table class="dashboard-table">
+            <tr>
+                <th>Giocatore</th>
+                <th>Mete</th>
+            </tr>
+
+            ${
+                players.map(p=>`
+                    <tr>
+                        <td>
+                            ${playerDisplayName(p,players)}
+                        </td>
+                        <td>${p.Mete}</td>
+                    </tr>
+                `).join('')
+            }
+
+        </table>
+
+        ${
+            players.map(p=>`
+
+                <div class="rank-row">
+
+                    <div class="rank-name">
+
+                        ${playerDisplayName(p,players)}
+
                     </div>
 
-                    <small>
-                        G${i+1}
-                    </small>
+                    <div class="rank-bar">
+
+                        <div
+                            class="rank-fill"
+                            style="width:${
+                                (p.Mete/max)*100
+                            }%">
+                        </div>
+
+                    </div>
+
+                    <div class="rank-value">
+                        ${p.Mete}
+                    </div>
 
                 </div>
 
-            `).join('')}
+            `).join('')
+        }
+    `;
+}
+function renderKickers(){
 
-        </div>
+    const players =
+        getDashboardPlayerStats()
+        .map(p=>{
+
+            const tentati =
+                p.TrasformazioniTentate +
+                p.PunizioniTentate +
+                p.DropTentati;
+
+            const realizzati =
+                p.TrasformazioniRiuscite +
+                p.PunizioniRiuscite +
+                p.DropRiusciti;
+
+            const sbagliati =
+                tentati - realizzati;
+
+            return {
+                ...p,
+                tentati,
+                realizzati,
+                sbagliati,
+                perc:
+                    tentati
+                    ? Math.round(
+                        realizzati*100/tentati
+                    )
+                    : 0
+            };
+        })
+        .filter(p=>p.tentati>0)
+        .sort((a,b)=>
+            b.realizzati-a.realizzati
+        )
+        .slice(0,10);
+
+    if(!players.length){
+        return '<p>Nessun calcio registrato.</p>';
+    }
+
+    return `
+        <table class="dashboard-table">
+
+            <tr>
+                <th>Giocatore</th>
+                <th>T</th>
+                <th>R</th>
+                <th>S</th>
+                <th>%</th>
+            </tr>
+
+            ${
+                players.map(p=>`
+
+                    <tr>
+
+                        <td>
+                            ${playerDisplayName(p,players)}
+                        </td>
+
+                        <td>${p.tentati}</td>
+
+                        <td>${p.realizzati}</td>
+
+                        <td>${p.sbagliati}</td>
+
+                        <td>${p.perc}%</td>
+
+                    </tr>
+
+                `).join('')
+            }
+
+        </table>
+    `;
+}
+function renderDiscipline(){
+
+    const players =
+        getDashboardPlayerStats()
+        .filter(
+            p =>
+                p.Gialli > 0
+                ||
+                p.Rossi > 0
+        )
+        .sort(
+            (a,b)=>
+                (b.Gialli+b.Rossi)
+                -
+                (a.Gialli+a.Rossi)
+        );
+
+    if(!players.length){
+        return `
+            <p>
+                ✅ Nessun cartellino registrato
+            </p>
+        `;
+    }
+
+    return `
+        <table class="dashboard-table">
+
+            <tr>
+                <th>Giocatore</th>
+                <th>Gialli</th>
+                <th>Rossi</th>
+            </tr>
+
+            ${
+                players.map(p=>`
+
+                    <tr>
+
+                        <td>
+                            ${playerDisplayName(p,players)}
+                        </td>
+
+                        <td>${p.Gialli}</td>
+
+                        <td>${p.Rossi}</td>
+
+                    </tr>
+
+                `).join('')
+            }
+
+        </table>
     `;
 }
 async function loadVersion(){
