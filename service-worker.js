@@ -1,4 +1,4 @@
-const C = 'rugby-Manager-PRO-v1.4.3';
+const C = 'rugby-Manager-PRO-v1.4.4';
 
 const A = [
   './',
@@ -80,15 +80,10 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Lascia passare direttamente chiamate POST/HEAD (es. Gemini, Ollama /api/chat, /api/pull)
   if (e.request.method !== 'GET') return;
 
   const url = new URL(e.request.url);
-
-  // Non intercettare API esterne (Google Gemini) né Ollama locale (localhost:11434)
   if (url.origin !== self.location.origin) return;
-
-  // version.json deve sempre controllare la rete per rilevare nuovi aggiornamenti
   if (url.pathname.endsWith('/version.json')) return;
 
   e.respondWith(

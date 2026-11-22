@@ -11,8 +11,9 @@ const STORAGE_KEY = 'modb_impostazioni_motori_v1';
 
 const DEFAULT_PREF = {
   geminiApiKey: '',
-  geminiModel: 'gemini-3.8-flash',
-  modalitaOffline: 'auto', // 'auto' | 'ollama' | 'tesseract'
+  geminiModel: 'gemini-4-hydrogen',
+  saltaRichiestaGemini: false, // Diventa true solo se l'utente spunta "Non chiedere più"
+  modalitaOffline: 'auto',     // 'auto' | 'ollama' | 'tesseract'
   ollamaUrl: 'http://localhost:11434',
   ollamaModelloScelto: REQUISITI_MOTORI.ollamaModel,
   ollamaModelRevisionInstallata: 0,
@@ -49,7 +50,6 @@ export async function verificaStatoMotori() {
   const pref = leggiPreferenzeMotori();
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // 1. Verifica reale di Tesseract locale
   const tesseractPresente = await verificaTesseractLocale();
   const tesseractAggiornamentoRichiesto =
     tesseractPresente &&
@@ -60,7 +60,6 @@ export async function verificaStatoMotori() {
     salvaPreferenzeMotori({ tesseractRevisionInstallata: REQUISITI_MOTORI.tesseractRevision });
   }
 
-  // 2. Verifica reale di Ollama locale (o su PC in Wi-Fi)
   const statoOllama = {
     raggiungibile: false,
     versione: null,

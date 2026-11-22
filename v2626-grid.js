@@ -109,11 +109,10 @@ function v2626Open(file,source){
           <button id="gridClose" class="close">✕</button>
         </div>
 
-        <!-- Lettura automatica con Motore Ibrido (Gemini / Ollama / Tesseract) -->
         <div style="margin:10px 0;padding:12px;border-radius:12px;background:#ecfdf5;border:1px solid #a7f3d0;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between">
           <div style="flex:1;min-width:220px">
             <b>⚡ Lettura automatica AI / Ibrida</b>
-            <div class="help" id="gridAutoStatus" style="margin-top:2px">Legge tutto il foglio (anche correzioni a penna) senza allineare la griglia.</div>
+            <div class="help" id="gridAutoStatus" style="margin-top:2px">Usa Gemini (ping 1,5s / timeout 55s), Ollama o Tesseract senza allineare la griglia.</div>
           </div>
           <button id="gridAutoAi" class="btn" disabled>LEGGI CON AI / IBRIDO</button>
         </div>
@@ -164,10 +163,6 @@ function v2626Open(file,source){
   });
 }
 
-/**
- * Converte l'array JSON [{"maglia","ruolo","cognome_nome"}]
- * nel formato interno di Rugby Match Manager PRO (players + coachAway).
- */
 function v2626MappaDaIbrido(lista, fonte){
   const players=[];
   let coachAway='';
@@ -209,21 +204,29 @@ function v2626MappaDaIbrido(lista, fonte){
   return{players,coachAway};
 }
 
-/**
- * Esegue la lettura automatica con scannerIbrido (Gemini -> Ollama -> Tesseract)
- */
 async function v2626RunIbrido(){
   if(typeof window.elaboraDistinta!=='function'){
     toast('Motore ibrido non ancora caricato, avvio griglia...');
     return v2626Run();
   }
 
+  let pref=window.GestoreMotori?.leggiPreferenzeMotori?.()||{};
+  let apiKey=(pref.geminiApiKey||'').trim();
+
+  // Se sei online e non hai ancora inserito una chiave API Gemini, chiediglielo ora
+  if(navigator.onLine&&!apiKey&&!pref.saltaRichiestaGemini&&typeof window.chiediChiaveGeminiModal==='function'){
+    const scelta=await window.chiediChiaveGeminiModal();
+    if(!scelta){
+      v261Busy=false;
+      return;
+    }
+    apiKey=scelta.apiKey||'';
+  }
+
   v261Busy=true;
   v261Progress('Lettura automatica Mod. B','Avvio motore ibrido in corso...',15);
 
   try{
-    const pref=window.GestoreMotori?.leggiPreferenzeMotori?.()||{};
-    const apiKey=pref.geminiApiKey||'';
     const risultato=await window.elaboraDistinta(V2626.src,apiKey,(statoMsg)=>{
       v261ProgressUpdate(statoMsg,60);
     });
