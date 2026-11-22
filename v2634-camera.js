@@ -1,5 +1,5 @@
 'use strict';
-/* v26.3.4-test - acquisizione FIR guidata e rettifica prospettica. */
+/* v26.3.4-test - acquisizione FIR guidata, rettifica prospettica e stato motori OCR/AI. */
 (function () {
   const CAM = {
     stream: null, video: null, src: null, view: null, points: [],
@@ -223,7 +223,7 @@
       }
     }
 
-    /* Percorso 3: immagine gia presente sul telefono. */
+    /* Percorso 3: immagine già presente sul telefono. */
     if (img && !img.dataset.v2634) {
       img.dataset.v2634 = '1';
       const imageLabel = img.closest('label.upload');
@@ -244,6 +244,15 @@
     /* Il tabellone diventa il passo 5. */
     const finalNumber = finalStep?.querySelector('small');
     if (finalNumber) finalNumber.textContent = 'PASSO 5';
+
+    /* Pannello scelta/stato motori AI/OCR nella Sezione 2 all'apertura. */
+    const cardSezione2 = (scan || img || manual)?.closest('section.card');
+    if (cardSezione2 && !cardSezione2.querySelector('#v2634MotoriBox')) {
+      cardSezione2.insertAdjacentHTML('beforeend', '<div id="v2634MotoriBox"></div>');
+    }
+    if (typeof window.montaPannelloMotori === 'function' && document.getElementById('v2634MotoriBox')) {
+      window.montaPannelloMotori('v2634MotoriBox');
+    }
   }
 
   const baseReport = generateReport;
