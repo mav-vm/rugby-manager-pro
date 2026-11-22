@@ -1,8 +1,6 @@
 /**
- * Pannello grafico per la Sezione 2:
- * - Inserimento e verifica della chiave API Gemini (per lettura online)
- * - Scelta e stato motori offline (Modalità Leggera Tesseract vs Ollama AI)
- * - Riconoscimento automatico dei motori già presenti anche dopo aggiornamenti dell'app
+ * Pannello grafico per la Sezione 2 + Popup automatico richiesta chiave Gemini
+ * quando si tenta una lettura AI online senza aver ancora inserito la chiave.
  */
 
 import {
@@ -34,6 +32,64 @@ export async function montaPannelloMotori(targetIdOrEl = 'v2634MotoriBox') {
   disegnaPannello(container, stato);
 }
 
+export function chiediChiaveGeminiModal() {
+  return new Promise((resolve) => {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.innerHTML = `
+      <div class="modalbox">
+        <button type="button" class="close" aria-label="Chiudi">&times;</button>
+        <h3 style="margin-top:0">Hai una chiave API Gemini?</h3>
+        <p class="help">
+          Con una chiave API Gemini gratuita (<code>aistudio.google.com/apikey</code>) l'app legge anche le <b>correzioni scritte a penna</b> (circa 38s se c'è campo, altrimenti passa all'OCR in 1,5s).
+        </p>
+
+        <label for="modalInpGeminiKey">Chiave API Gemini (facoltativa)</label>
+        <input id="modalInpGeminiKey" type="text" placeholder="Incolla qui la chiave (AIza...)">
+
+        <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-weight:600;cursor:pointer">
+          <input id="modalChkNonChiedere" type="checkbox" style="width:18px;height:18px;margin:0">
+          Non chiedermelo più (usa sempre OCR offline)
+        </label>
+
+        <div class="actions" style="margin-top:14px">
+          <button type="button" class="btn full" id="modalBtnUsaGemini">Salva chiave e leggi con Gemini</button>
+          <button type="button" class="outline full" id="modalBtnUsaOffline">Continua senza chiave (OCR offline)</button>
+        </div>
+      </div>
+    `;
+
+    const chiudi = (risultato) => {
+      modal.remove();
+      resolve(risultato);
+    };
+
+    modal.querySelector('.close').onclick = () => chiudi(null);
+    modal.addEventListener('click', (e) => { if (e.target === modal) chiudi(null); });
+
+    modal.querySelector('#modalBtnUsaGemini').onclick = () => {
+      const key = modal.querySelector('#modalInpGeminiKey').value.trim();
+      if (!key) {
+        alert('Incolla prima la chiave API oppure premi "Continua senza chiave (OCR offline)".');
+        return;
+      }
+      salvaPreferenzeMotori({ geminiApiKey: key, saltaRichiestaGemini: false });
+      if (document.getElementById('v2634MotoriBox')) {
+        montaPannelloMotori('v2634MotoriBox');
+      }
+      chiudi({ apiKey: key, usaOffline: false });
+    };
+
+    modal.querySelector('#modalBtnUsaOffline').onclick = () => {
+      const nonChiedere = modal.querySelector('#modalChkNonChiedere').checked;
+      salvaPreferenzeMotori({ saltaRichiestaGemini: nonChiedere });
+      chiudi({ apiKey: '', usaOffline: true });
+    };
+
+    document.body.appendChild(modal);
+  });
+}
+
 function disegnaPannello(container, stato) {
   const { isMobile, preferenze, ollama, tesseract } = stato;
   const hasKey = Boolean((preferenze.geminiApiKey || '').trim());
@@ -49,7 +105,7 @@ function disegnaPannello(container, stato) {
       ? '<span class="status ok">Modalità Leggera pronta ✓ (Tesseract)</span>'
       : '<span class="status">Tesseract non trovato</span>';
     descrizione = isMobile
-      ? 'Su telefono/tablet in offline viene usato Tesseract integrato (zero installazioni). Inserisci una API Key Gemini per la massima precisione online.'
+      ? 'Su telefono/tablet in offline viene usato Tesseract integrato. Se c\'è campo puoi usare Gemini (ping 1,5s / timeout 55s).'
       : 'Modalità leggera attiva: in offline usa Tesseract (zero installazioni extra).';
   } else if (ollama.raggiungibile && ollama.aggiornaOllamaApp) {
     badgeHtml = `<span class="status">Aggiorna Ollama (${ollama.versione} → ${REQUISITI_MOTORI.ollamaMinVersion}+)</span>`;
@@ -89,7 +145,7 @@ function disegnaPannello(container, stato) {
         <div id="boxModelloGemini" style="margin-top:8px;${hasKey ? '' : 'display:none'}">
           <label for="selGeminiModel">Modello Gemini attivo</label>
           <select id="selGeminiModel">
-            <option value="${preferenze.geminiModel || 'gemini-3.8-flash'}">${preferenze.geminiModel || 'gemini-3.8-flash'}</option>
+            <option value="${preferenze.geminiModel || 'gemini-4-hydrogen'}">${preferenze.geminiModel || 'gemini-4-hydrogen'}</option>
           </select>
         </div>
         <small class="help" style="margin-top:6px">Resta salvata solo su questo dispositivo. Chiave gratuita su Google AI Studio (aistudio.google.com/apikey).</small>
@@ -125,6 +181,10 @@ function disegnaPannello(container, stato) {
         <button type="button" class="outline" id="btnRicontrollaMotori">
           Ricontrolla stato
         </button>
+
+        <button type="button" class="outline" id="btnLogScanner">
+          Log ultima lettura
+        </button>
       </div>
 
       <div id="boxProgressoOllama" class="help" style="margin-top:8px; display:none"></div>
@@ -153,7 +213,7 @@ function disegnaPannello(container, stato) {
 
   container.querySelector('#btnVerificaGemini')?.addEventListener('click', async () => {
     const key = inpKey.value.trim();
-    salvaPreferenzeMotori({ geminiApiKey: key });
+    salvaPreferenzeMotori({ geminiApiKey: key, saltaRichiestaGemini: false });
 
     if (!key) {
       badgeKey.className = 'status';
@@ -194,6 +254,10 @@ function disegnaPannello(container, stato) {
 
   container.querySelector('#btnRicontrollaMotori')?.addEventListener('click', () => {
     montaPannelloMotori(container);
+  });
+
+  container.querySelector('#btnLogScanner')?.addEventListener('click', () => {
+    alert((window.SCANNER_LOG || ['Nessuna lettura eseguita in questa sessione']).join('\n'));
   });
 
   container.querySelector('#btnSalvaOllamaUrl')?.addEventListener('click', () => {
@@ -249,8 +313,23 @@ function apriGuidaOllamaModal() {
   document.body.appendChild(modal);
 }
 
-window.montaPannelloMotori = montaPannelloMotori;
-
-if (document.getElementById('v2634MotoriBox')) {
-  montaPannelloMotori('v2634MotoriBox');
+function trovaEMontaSezione2() {
+  let box = document.getElementById('v2634MotoriBox');
+  if (!box) {
+    const anchor = document.querySelector('#awayScan, #awayImage, #manualAway');
+    const card = anchor?.closest('.card, section');
+    if (card) {
+      box = document.createElement('div');
+      box.id = 'v2634MotoriBox';
+      card.appendChild(box);
+    }
+  }
+  if (box) {
+    montaPannelloMotori(box);
+  }
 }
+
+window.montaPannelloMotori = montaPannelloMotori;
+window.chiediChiaveGeminiModal = chiediChiaveGeminiModal;
+
+trovaEMontaSezione2();
