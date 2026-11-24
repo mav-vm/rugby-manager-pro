@@ -12,8 +12,8 @@ const STORAGE_KEY = 'modb_impostazioni_motori_v1';
 const DEFAULT_PREF = {
   geminiApiKey: '',
   geminiModel: 'gemini-4-hydrogen',
-  saltaRichiestaGemini: false, // Diventa true solo se l'utente spunta "Non chiedere più"
-  modalitaOffline: 'auto',     // 'auto' | 'ollama' | 'tesseract'
+  saltaRichiestaGemini: false,
+  modalitaOffline: 'auto',
   ollamaUrl: 'http://localhost:11434',
   ollamaModelloScelto: REQUISITI_MOTORI.ollamaModel,
   ollamaModelRevisionInstallata: 0,
@@ -170,4 +170,30 @@ export async function scaricaModelloOllama(nomeModello = REQUISITI_MOTORI.ollama
     ollamaModelloScelto: nomeModello,
     ollamaModelRevisionInstallata: REQUISITI_MOTORI.ollamaModelRevision
   });
+}
+
+export function ottieniInfoInstallerOllama() {
+  const ua = navigator.userAgent;
+  if (/Win/i.test(ua)) {
+    return {
+      os: 'Windows',
+      url: 'https://ollama.com',
+      file: 'OllamaSetup.exe',
+      comandoRapido: `ollama run ${REQUISITI_MOTORI.ollamaModel}`
+    };
+  }
+  if (/Mac/i.test(ua)) {
+    return {
+      os: 'macOS',
+      url: 'https://ollama.com',
+      file: 'Ollama-darwin.zip',
+      comandoRapido: `ollama run ${REQUISITI_MOTORI.ollamaModel}`
+    };
+  }
+  return {
+    os: 'Linux / Altro',
+    url: 'https://ollama.com',
+    file: 'Pagina download Ollama',
+    comandoRapido: `curl -fsSL https://ollama.com | sh && ollama run ${REQUISITI_MOTORI.ollamaModel}`
+  };
 }
