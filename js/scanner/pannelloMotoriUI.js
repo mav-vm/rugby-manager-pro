@@ -306,3 +306,9 @@ function disegnaPannello(container, stato, aperto = false) {
 		};
 	}
 }
+window.montaPannelloMotori = montaPannelloMotori;
+window.chiediChiaveGeminiModal = chiediChiaveGeminiModal;
+
+if (document.getElementById('v2634MotoriBox')) {
+  montaPannelloMotori('v2634MotoriBox');
+}
