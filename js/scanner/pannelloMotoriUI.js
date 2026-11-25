@@ -126,7 +126,7 @@ function disegnaPannello(container, stato, aperto = false) {
   let classeBtnOllama = 'btn';
   if (!isMobile) {
     if (!ollama.raggiungibile || ollama.aggiornaOllamaApp) {
-      testoBtnOllama = `Installa Ollama (${REQUISITI_MOTORI.ollamaMinVersion}+) senza digitare`;
+      testoBtnOllama = `Apri download ufficiale Ollama (${REQUISITI_MOTORI.ollamaMinVersion}+)`;
     } else if (ollama.aggiornaModello) {
       testoBtnOllama = `Scarica / Aggiorna modello AI (${REQUISITI_MOTORI.ollamaModel})`;
     } else {
@@ -248,7 +248,7 @@ function disegnaPannello(container, stato, aperto = false) {
     montaPannelloMotori(container, true);
   };
 
-  // --- Evento Pulsante 1-Click Ollama con conferma ---
+  // --- Evento Pulsante Ollama ---
   const btnOllama = container.querySelector('#btnAzioneOllama');
   const lblProgresso = container.querySelector('#statoDownloadOllama');
 
@@ -256,13 +256,13 @@ function disegnaPannello(container, stato, aperto = false) {
     btnOllama.onclick = async () => {
       const modelloTarget = REQUISITI_MOTORI.ollamaModel;
 
-      // CASO A: Ollama non installato o versione precedente a ollamaMinVersion
+      // Ollama non è installato o richiede un aggiornamento.
       if (!ollama.raggiungibile || ollama.aggiornaOllamaApp) {
         const info = ottieniInfoInstallerOllama();
         const conferma = confirm(
           `Ollama non risulta attivo o aggiornato (richiesta v${REQUISITI_MOTORI.ollamaMinVersion}+).\n\n` +
-          `Vuoi scaricare subito l'installer ufficiale per ${info.os} (${info.file})?\n\n` +
-          `Una volta completata l'installazione, torna qui e premi di nuovo questo pulsante per scaricare automaticamente il modello ${modelloTarget}.`
+          `Vuoi aprire la ${info.file}?\n\n` +
+          `Dopo aver installato e avviato Ollama, torna qui e premi di nuovo il pulsante per scaricare automaticamente il modello ${modelloTarget}.`
         );
         if (!conferma) return;
 
@@ -270,17 +270,18 @@ function disegnaPannello(container, stato, aperto = false) {
 
         const link = document.createElement('a');
         link.href = info.url;
-        link.download = info.file;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
         document.body.appendChild(link);
         link.click();
         link.remove();
 
         lblProgresso.style.display = 'block';
-        lblProgresso.textContent = `Download di ${info.file} avviato. Dopo l'installazione premi di nuovo il pulsante.`;
+        lblProgresso.textContent = `Aperta la ${info.file}. Dopo l'installazione di Ollama premi di nuovo il pulsante.`;
         return;
       }
 
-      // CASO B: Ollama è già attivo -> scarica direttamente il modello senza digitare nulla
+      // Ollama è già attivo: scarica il modello senza digitare comandi.
       const confermaModello = confirm(
         `Confermi il download e l'installazione automatica del modello "${modelloTarget}" su Ollama?\n\n` +
         `L'operazione avverrà in automatico senza digitare comandi.`
@@ -300,11 +301,11 @@ function disegnaPannello(container, stato, aperto = false) {
         alert(`Modello ${modelloTarget} installato e pronto!`);
         montaPannelloMotori(container, true);
       } catch (err) {
-      	alert('Errore durante il download del modello:'+ err.message);
-				btnOllama.disabled = false;
-			}
-		};
-	}
+        alert('Errore durante il download del modello: ' + err.message + '\n\nVerifica che Ollama sia avviato e che consenta le richieste dal sito (configurazione OLLAMA_ORIGINS).');
+        btnOllama.disabled = false;
+      }
+    };
+  }
 }
 window.montaPannelloMotori = montaPannelloMotori;
 window.chiediChiaveGeminiModal = chiediChiaveGeminiModal;

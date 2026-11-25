@@ -1,4 +1,4 @@
-const C = 'rugby-Manager-PRO-v1.5';
+const C = 'rugby-Manager-PRO-v1.6';
 
 const A = [
   './',

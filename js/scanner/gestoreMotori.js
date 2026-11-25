@@ -1,5 +1,5 @@
 /**
- * Gestisce le preferenze utente (Chiave API Gemini + Modalit‡ Offline Ollama/Tesseract),
+ * Gestisce le preferenze utente (Chiave API Gemini + Modalit√† Offline Ollama/Tesseract),
  * verifica i motori realmente installati sul dispositivo e permette di scaricare/aggiornare
  * il modello Ollama direttamente dalla UI.
  */
@@ -177,23 +177,23 @@ export function ottieniInfoInstallerOllama() {
   if (/Win/i.test(ua)) {
     return {
       os: 'Windows',
-      url: 'https://ollama.com',
-      file: 'OllamaSetup.exe',
+      url: 'https://ollama.com/download/windows',
+      file: 'pagina ufficiale di download per Windows',
       comandoRapido: `ollama run ${REQUISITI_MOTORI.ollamaModel}`
     };
   }
   if (/Mac/i.test(ua)) {
     return {
       os: 'macOS',
-      url: 'https://ollama.com',
-      file: 'Ollama-darwin.zip',
+      url: 'https://ollama.com/download/mac',
+      file: 'pagina ufficiale di download per macOS',
       comandoRapido: `ollama run ${REQUISITI_MOTORI.ollamaModel}`
     };
   }
   return {
     os: 'Linux / Altro',
-    url: 'https://ollama.com',
-    file: 'Pagina download Ollama',
+    url: 'https://ollama.com/download/linux',
+    file: 'pagina ufficiale di installazione per Linux',
     comandoRapido: `curl -fsSL https://ollama.com | sh && ollama run ${REQUISITI_MOTORI.ollamaModel}`
   };
 }
