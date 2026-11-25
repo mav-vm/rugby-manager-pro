@@ -1,4 +1,4 @@
-const C = 'rugby-Manager-PRO-v1.6';
+const C = 'rugby-Manager-PRO-v1.7';
 
 const A = [
   './',
@@ -43,6 +43,7 @@ const A = [
   './v2637-feedback.css',
   './v2639-r5.js',
   './v2639-r5.css',
+  './v2640-motori-indipendenti.js',
   './license.js',
   './manifest.json',
   './icon-192.png',
