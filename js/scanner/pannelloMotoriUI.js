@@ -300,7 +300,7 @@ function disegnaPannello(container, stato, aperto = false) {
         alert(`Modello ${modelloTarget} installato e pronto!`);
         montaPannelloMotori(container, true);
       } catch (err) {
-      	alert('Errore durante il download del modello: ${err.message}');
+      	alert('Errore durante il download del modello:'+ err.message);
 				btnOllama.disabled = false;
 			}
 		};
